@@ -15,6 +15,3 @@ router.post("/add", addItemToCart);
 router.put("/update", updateCartItem);
 router.delete("/remove/:productId", removeCartItem);
 router.delete("/clear", clearCart);
-
-
-
