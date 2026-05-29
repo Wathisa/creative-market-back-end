@@ -5,11 +5,12 @@ import {
   getOrderDetails,
   updateOrderStatus,
 } from "../modules/orders/order.controller.js";
+import { verifyToken } from "../middlewares/login.auth.middleware.js";
 
 export const router = Router();
 
-// ทุกอย่างต้อง Login ก่อน (รอใส่ Middleware ของเพื่อน)
-// router.use(protect); 
+// ทุก Request ใน Order ต้องผ่านการตรวจสอบ Token
+router.use(verifyToken);
 
 router.get("/", getMyOrders);
 router.get("/:orderId", getOrderDetails);

@@ -3,29 +3,47 @@ import { Product } from "../products/product.model.js";
 
 // Helper สำหรับคำนวณยอดรวมและจัดรูปแบบข้อมูลก่อนส่งกลับ
 const formatCartResponse = (cart) => {
+  if (!cart) return null;
+  
   const cartObj = cart.toObject();
   let totalPrice = 0;
   let totalItems = 0;
 
-  cartObj.items.forEach((item) => {
-    // ตรวจสอบว่ามีข้อมูลสินค้าที่ถูก populate มาจริงไหม
-    if (item.productId && item.productId.price) {
-      totalPrice += item.productId.price * item.quantity;
+  // กรองเอาเฉพาะไอเทมที่มีข้อมูลสินค้าจริงๆ (ป้องกันกรณีสินค้าถูกลบออกจากระบบ)
+  const formattedItems = cartObj.items.map((item) => {
+    const product = item.productId;
+    const itemSubtotal = product ? (product.price || 0) * item.quantity : 0;
+    
+    if (product) {
+      totalPrice += itemSubtotal;
       totalItems += item.quantity;
     }
+
+    return {
+      productId: product?._id || item.productId,
+      name: product?.name || "ไม่พบข้อมูลสินค้า",
+      price: product?.price || 0,
+      images: product?.images || [],
+      artist: product?.artist || "Unknown",
+      quantity: item.quantity,
+      subtotal: itemSubtotal
+    };
   });
 
   return {
-    ...cartObj,
+    _id: cartObj._id,
+    userId: cartObj.userId,
+    items: formattedItems,
     totalPrice,
     totalItems,
+    updatedAt: cartObj.updatedAt
   };
 };
 
 // ดึงข้อมูลตะกร้าของ User (ดึง ID จาก req.user ที่ได้จาก Cookie)
 export const getCart = async (req, res, next) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.user?.userId;
     if (!userId) {
       const error = new Error("ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่");
       error.status = 401;
@@ -53,7 +71,7 @@ export const getCart = async (req, res, next) => {
 export const addItemToCart = async (req, res, next) => {
   try {
     const { productId, quantity } = req.body;
-    const userId = req.user?._id;
+    const userId = req.user?.userId;
 
     if (!userId) {
       const error = new Error("กรุณาเข้าสู่ระบบก่อนเพิ่มสินค้าลงตะกร้า");
@@ -61,6 +79,7 @@ export const addItemToCart = async (req, res, next) => {
       throw error;
     }
 
+    // ตรวจสอบข้อมูลสินค้าและสต็อก
     const product = await Product.findById(productId);
     if (!product) {
       const error = new Error("ไม่พบสินค้านี้ในระบบ");
@@ -68,32 +87,48 @@ export const addItemToCart = async (req, res, next) => {
       throw error;
     }
 
-    if (product.quantity < quantity) {
-      const error = new Error("สินค้าในคลังไม่เพียงพอ");
-      error.status = 400;
-      throw error;
-    }
+    const addQuantity = Number(quantity) || 1;
 
     let cart = await Cart.findOne({ userId });
 
     if (cart) {
-      const itemIndex = cart.items.findIndex((p) => p.productId == productId);
+      const itemIndex = cart.items.findIndex((p) => p.productId.toString() === productId.toString());
+      
       if (itemIndex > -1) {
-        const newTotalQuantity = cart.items[itemIndex].quantity + quantity;
+        // กรณีมีสินค้าเดิมอยู่แล้ว: ให้บวกเพิ่ม (Increment)
+        const currentQuantity = cart.items[itemIndex].quantity;
+        const newTotalQuantity = currentQuantity + addQuantity;
+
+        console.log(`Debug: Found existing item. Current: ${currentQuantity}, Adding: ${addQuantity}, NewTotal: ${newTotalQuantity}`);
+
         if (newTotalQuantity > product.quantity) {
-          const error = new Error("ไม่สามารถเพิ่มได้ จำนวนรวมเกินสต็อกที่มี");
+          const error = new Error(`สินค้าในคลังไม่พอ (ในตะกร้ามี ${currentQuantity}, เพิ่มอีก ${addQuantity} ไม่ได้ เพราะสต็อกเหลือ ${product.quantity})`);
           error.status = 400;
           throw error;
         }
+        
         cart.items[itemIndex].quantity = newTotalQuantity;
+        cart.markModified('items'); // <--- บังคับให้ Mongoose รู้ว่ามีการแก้ไขใน Array
       } else {
-        cart.items.push({ productId, quantity });
+        // กรณีไม่มีสินค้าชิ้นนี้ในตะกร้ามาก่อน
+        if (addQuantity > product.quantity) {
+          const error = new Error(`สินค้าในคลังไม่พอ (สต็อกเหลือ ${product.quantity})`);
+          error.status = 400;
+          throw error;
+        }
+        cart.items.push({ productId, quantity: addQuantity });
       }
       await cart.save();
     } else {
+      // กรณีไม่มีตะกร้าเลย: สร้างตะกร้าใหม่
+      if (addQuantity > product.quantity) {
+        const error = new Error(`สินค้าในคลังไม่พอ (สต็อกเหลือ ${product.quantity})`);
+        error.status = 400;
+        throw error;
+      }
       cart = await Cart.create({
         userId,
-        items: [{ productId, quantity }],
+        items: [{ productId, quantity: addQuantity }],
       });
     }
 
@@ -106,8 +141,8 @@ export const addItemToCart = async (req, res, next) => {
 
 export const updateCartItem = async (req, res, next) => {
   try {
-    const { productId, quantity } = req.body;
-    const userId = req.user?._id;
+    const { productId, quantity } = req.body; // quantity ส่งมาเป็นเลขบวก (เช่น 1) หรือเลขลบ (เช่น -1)
+    const userId = req.user?.userId;
 
     if (!userId) {
       const error = new Error("กรุณาเข้าสู่ระบบก่อนจัดการตะกร้า");
@@ -115,19 +150,9 @@ export const updateCartItem = async (req, res, next) => {
       throw error;
     }
 
-    if (quantity <= 0) {
-      return removeCartItem(req, res, next);
-    }
-
-    const product = await Product.findById(productId);
-    if (!product) {
-      const error = new Error("ไม่พบสินค้านี้ในระบบ");
-      error.status = 404;
-      throw error;
-    }
-
-    if (product.quantity < quantity) {
-      const error = new Error("สินค้าในคลังไม่เพียงพอ");
+    const changeAmount = Number(quantity);
+    if (isNaN(changeAmount)) {
+      const error = new Error("จำนวนสินค้าต้องเป็นตัวเลข");
       error.status = 400;
       throw error;
     }
@@ -139,9 +164,34 @@ export const updateCartItem = async (req, res, next) => {
       throw error;
     }
 
-    const itemIndex = cart.items.findIndex((p) => p.productId == productId);
+    const itemIndex = cart.items.findIndex((p) => p.productId.toString() === productId.toString());
     if (itemIndex > -1) {
-      cart.items[itemIndex].quantity = quantity;
+      const currentQuantity = cart.items[itemIndex].quantity;
+      const newTotalQuantity = currentQuantity + changeAmount;
+
+      // ถ้าผลลัพธ์เป็น 0 หรือติดลบ ให้ลบสินค้าออกจากตะกร้า
+      if (newTotalQuantity <= 0) {
+        cart.items = cart.items.filter((item) => item.productId.toString() !== productId.toString());
+      } else {
+        // ตรวจสอบสต็อกสินค้าก่อนอัปเดต (เฉพาะกรณีบวกเพิ่ม)
+        if (changeAmount > 0) {
+          const product = await Product.findById(productId);
+          if (!product) {
+            const error = new Error("ไม่พบสินค้านี้ในระบบ");
+            error.status = 404;
+            throw error;
+          }
+          if (product.quantity < newTotalQuantity) {
+            const error = new Error(`สินค้าในคลังไม่พอ (สต็อกเหลือ ${product.quantity})`);
+            error.status = 400;
+            throw error;
+          }
+        }
+        
+        cart.items[itemIndex].quantity = newTotalQuantity;
+      }
+
+      cart.markModified('items');
       await cart.save();
       await cart.populate("items.productId", "name price images artist");
       res.status(200).json({ success: true, data: formatCartResponse(cart) });
@@ -157,7 +207,7 @@ export const updateCartItem = async (req, res, next) => {
 
 export const removeCartItem = async (req, res, next) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.user?.userId;
     const { productId } = req.params;
 
     if (!userId) {
@@ -212,7 +262,7 @@ export const getCartByUserId = async (req, res, next) => {
 // ล้างตะกร้าของ User คนนั้นๆ
 export const clearCart = async (req, res, next) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.user?.userId;
     if (!userId) {
       const error = new Error("กรุณาเข้าสู่ระบบก่อนจัดการตะกร้า");
       error.status = 401;

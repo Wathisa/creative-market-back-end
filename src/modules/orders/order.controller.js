@@ -5,7 +5,7 @@ import { Product } from "../products/product.model.js";
 // 1. สร้าง Order จากตะกร้า (Checkout)
 export const createOrder = async (req, res, next) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.user?.userId;
     if (!userId) {
       const error = new Error("กรุณาเข้าสู่ระบบก่อนสั่งซื้อ");
       error.status = 401;
@@ -85,7 +85,7 @@ export const createOrder = async (req, res, next) => {
 // 2. ดึงรายการคำสั่งซื้อของ User (History)
 export const getMyOrders = async (req, res, next) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.user?.userId;
     const orders = await Order.find({ userId }).sort({ createdAt: -1 });
 
     res.status(200).json({ success: true, data: orders });
