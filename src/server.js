@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import mongoose from "mongoose";
+import cookieParser from "cookie-parser"; // will remove after upload to cloud (P'Montri's Add)
 
 import { router as apiRoutes } from "./routes/index.js";
 import { connectDB } from "./config/mongodb.js";
@@ -28,6 +29,7 @@ app.use(Limiter);
 
 app.use(express.json());
 app.use(express.static("public")); // will remove after upload to cloud
+app.use(cookieParser());   // will remove after upload to cloud (P'Montri's Add)
 
 app.use("/api", apiRoutes);
 

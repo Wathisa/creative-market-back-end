@@ -10,7 +10,8 @@ export const checkEmail = async (req, res) => {
 };
 
 export const registerUser = async (req, res) => {
-  const { email, password, confirmPassword } = req.body;
+  // 1. ดึง username และ role ออกมาจาก req.body ด้วย
+  const { email, password, confirmPassword, username, role } = req.body;
 
   if (password !== confirmPassword) {
     return res.status(400).json({ message: "Passwords do not match" });
@@ -21,7 +22,8 @@ export const registerUser = async (req, res) => {
     return res.status(400).json({ message: "Email already exists" });
   }
 
-  const newUser = new User({ email, password });
+  
+  const newUser = new User({ email, password, username, role });
   await newUser.save();
 
   res.status(201).json({ success: true, message: "User registered successfully" });

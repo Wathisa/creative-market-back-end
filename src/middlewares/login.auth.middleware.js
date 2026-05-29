@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 
 // 1. ตรวจสอบ Token
 const verifyToken = (req, res, next) => {
@@ -29,7 +29,4 @@ const requireRole = (allowedRoles) => {
   };
 };
 
-module.exports = {
-  verifyToken,
-  requireRole
-};
+export default { verifyToken, requireRole };

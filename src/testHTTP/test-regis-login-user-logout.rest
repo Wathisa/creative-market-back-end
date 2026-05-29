@@ -1,0 +1,41 @@
+@baseUrl = http://localhost:7777/api/auth
+
+### =========================================
+### 1. สมัครสมาชิก (Register)
+### =========================================
+POST http://localhost:7777/api/users/register
+Content-Type: application/json
+
+{
+  "username": "tridev",
+  "email": "admintest2@example.com",
+  "password": "password1234",
+  "confirmPassword": "password1234",
+  "role": "admin"
+}
+
+### =========================================
+### 2. เข้าสู่ระบบ (Login)
+### =========================================
+# หมายเหตุ: เมื่อ Login สำเร็จ VS Code REST Client จะจำ Cookie ไว้ให้อัตโนมัติสำหรับการยิง API เส้นอื่นครับ
+POST http://localhost:7777/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admintest2@example.com",
+  "password": "password1234"
+}
+
+### =========================================
+### 3. ตรวจสอบเซสชันผู้ใช้ (Check User)
+### =========================================
+# หมายเหตุ: ต้องยิง Login ให้ผ่านก่อน เพื่อให้มี Cookie (Token) แนบมากับ Request นี้
+GET http://localhost:7777/api/auth/me
+Accept: application/json
+
+### =========================================
+### 4. ออกจากระบบ (Logout)
+### =========================================
+POST http://localhost:7777/api/auth/logout
+Accept: application/json
+Content-Type: application/json
