@@ -1,5 +1,8 @@
-### ดูตะกร้าของ user
-GET http://localhost:7777/api/cart/user_123
+### หมายเหตุ: ทุก Request ต้องมีการ Login ก่อนเพื่อให้มี Cookie ส่งไป
+### (หรือถ้ายังไม่มีระบบ Login ให้เพื่อนช่วยทำ Middleware จำลอง req.user มาให้ก่อน)
+
+### ดึงข้อมูลตะกร้า
+GET http://localhost:7777/api/cart/
 
 ### เพิ่มสินค้าลงตะกร้า 
 POST http://localhost:7777/api/cart/add
@@ -11,14 +14,17 @@ Content-Type: application/json
   "quantity": 1
 }
 
-### เพิ่มสินค้าเดิม (ลองทดสอบดูว่า quantity มันบวกเพิ่มไหม)
-POST http://localhost:7777/api/cart/add
+### อัปเดตจำนวนสินค้า
+PUT http://localhost:7777/api/cart/update
 Content-Type: application/json
 
 {
-  "userId": "user_123",
   "productId": "6a0d57f760d284590d602fa9", 
-  "quantity": 2
+  "quantity": 5
 }
-#### ล้างตะกร้าทั้งหมด
-DELETE http://localhost:7777/api/cart/clear/user_123
+
+### ลบสินค้า 1 ชิ้นออกจากตะกร้า
+DELETE http://localhost:7777/api/cart/remove/6a0d57f760d284590d602fa9
+
+### ล้างตะกร้าทั้งหมด
+DELETE http://localhost:7777/api/cart/clear

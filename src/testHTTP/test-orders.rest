@@ -1,0 +1,16 @@
+### สร้างคำสั่งซื้อ (Checkout จากตะกร้า)
+POST http://localhost:7777/api/orders/checkout
+
+### ดึงประวัติการสั่งซื้อทั้งหมด
+GET http://localhost:7777/api/orders/
+
+### ดูรายละเอียดคำสั่งซื้อรายอัน
+GET http://localhost:7777/api/orders/ไอดีของออเดอร์
+
+### อัปเดตสถานะเป็นจ่ายเงินแล้ว (Mock PromptPay Success)
+PATCH http://localhost:7777/api/orders/status/ไอดีของออเดอร์
+Content-Type: application/json
+
+{
+  "status": "paid"
+}
