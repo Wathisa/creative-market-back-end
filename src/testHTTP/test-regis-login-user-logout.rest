@@ -8,7 +8,7 @@ Content-Type: application/json
 
 {
   "username": "tridev",
-  "email": "admintest@example.com",
+  "email": "admintest2@example.com",
   "password": "password1234",
   "confirmPassword": "password1234",
   "role": "admin"
@@ -22,7 +22,7 @@ POST http://localhost:7777/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "admintest@example.com",
+  "email": "admintest2@example.com",
   "password": "password1234"
 }
 
