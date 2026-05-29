@@ -25,6 +25,17 @@ Content-Type: application/json
   "quantity": 1
 }
 
+### 3. เพิ่มสินค้าลงตะกร้า (Add Item)
+# Logic: บวกเพิ่มจากของเดิม (Increment: Current + New)
+POST http://localhost:7777/api/cart/add
+Content-Type: application/json
+
+{
+  "productId": "6a17c381d7b9296b299277da", 
+  "quantity": 1
+}
+
+
 ### 4. อัปเดตจำนวนสินค้า (Update Item)
 # Logic: แทนที่ด้วยจำนวนที่ระบุ (Set: Replace with New Value)
 PATCH http://localhost:7777/api/cart/update
@@ -32,7 +43,18 @@ Content-Type: application/json
 
 {
   "productId": "6a1685fc96d193295d2a496a", 
-  "quantity": 5
+  "quantity": 1
+}
+
+
+### 4. อัปเดตจำนวนสินค้า (Update Item)
+# Logic: แทนที่ด้วยจำนวนที่ระบุ (Set: Replace with New Value)
+PATCH http://localhost:7777/api/cart/update
+Content-Type: application/json
+
+{
+  "productId": "6a17c381d7b9296b299277da", 
+  "quantity": 1
 }
 
 ### 5. ลบสินค้า 1 ชิ้นออกจากตะกร้า (Remove Item)

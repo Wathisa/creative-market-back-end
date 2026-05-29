@@ -141,7 +141,7 @@ export const addItemToCart = async (req, res, next) => {
 
 export const updateCartItem = async (req, res, next) => {
   try {
-    const { productId, quantity } = req.body;
+    const { productId, quantity } = req.body; // quantity ส่งมาเป็นเลขบวก (เช่น 1) หรือเลขลบ (เช่น -1)
     const userId = req.user?.userId;
 
     if (!userId) {
@@ -150,20 +150,9 @@ export const updateCartItem = async (req, res, next) => {
       throw error;
     }
 
-    const targetQuantity = Number(quantity);
-    if (targetQuantity <= 0) {
-      return removeCartItem(req, res, next);
-    }
-
-    const product = await Product.findById(productId);
-    if (!product) {
-      const error = new Error("ไม่พบสินค้านี้ในระบบ");
-      error.status = 404;
-      throw error;
-    }
-
-    if (product.quantity < targetQuantity) {
-      const error = new Error(`สินค้าในคลังไม่พอ (สต็อกเหลือ ${product.quantity})`);
+    const changeAmount = Number(quantity);
+    if (isNaN(changeAmount)) {
+      const error = new Error("จำนวนสินค้าต้องเป็นตัวเลข");
       error.status = 400;
       throw error;
     }
@@ -175,11 +164,34 @@ export const updateCartItem = async (req, res, next) => {
       throw error;
     }
 
-    const itemIndex = cart.items.findIndex((p) => p.productId.toString() === productId);
+    const itemIndex = cart.items.findIndex((p) => p.productId.toString() === productId.toString());
     if (itemIndex > -1) {
-      // สำหรับ PATCH update: เราจะแทนที่ด้วย "จำนวนสุทธิ" ที่ User ต้องการ
-      // เช่น จาก 1 เปลี่ยนเป็น 5 (ใช้ในหน้าตะกร้าที่กด +/- หรือพิมพ์เลข)
-      cart.items[itemIndex].quantity = targetQuantity;
+      const currentQuantity = cart.items[itemIndex].quantity;
+      const newTotalQuantity = currentQuantity + changeAmount;
+
+      // ถ้าผลลัพธ์เป็น 0 หรือติดลบ ให้ลบสินค้าออกจากตะกร้า
+      if (newTotalQuantity <= 0) {
+        cart.items = cart.items.filter((item) => item.productId.toString() !== productId.toString());
+      } else {
+        // ตรวจสอบสต็อกสินค้าก่อนอัปเดต (เฉพาะกรณีบวกเพิ่ม)
+        if (changeAmount > 0) {
+          const product = await Product.findById(productId);
+          if (!product) {
+            const error = new Error("ไม่พบสินค้านี้ในระบบ");
+            error.status = 404;
+            throw error;
+          }
+          if (product.quantity < newTotalQuantity) {
+            const error = new Error(`สินค้าในคลังไม่พอ (สต็อกเหลือ ${product.quantity})`);
+            error.status = 400;
+            throw error;
+          }
+        }
+        
+        cart.items[itemIndex].quantity = newTotalQuantity;
+      }
+
+      cart.markModified('items');
       await cart.save();
       await cart.populate("items.productId", "name price images artist");
       res.status(200).json({ success: true, data: formatCartResponse(cart) });
