@@ -15,7 +15,7 @@ export const getProducts = async (req, res, next) => {
         { name: { $regex: search, $options: "i" } },
         { slug: { $regex: search, $options: "i" } },
         { cartName: { $regex: search, $options: "i" } },
-        { category: { $regex: search, $options: "i" } },
+        // { category: { $regex: search, $options: "i" } },
         { artist: { $regex: search, $options: "i" } },
       ];
     }
