@@ -1,5 +1,6 @@
 import { Order } from "../orders/order.model.js";
 import { User } from "../register/user.model.js";
+import { Address } from "../address/address.model.js";
 
 const STATUS_LABELS = {
   pending: "รอดำเนินการ",
@@ -128,6 +129,88 @@ export const getMyOrders = async (req, res, next) => {
         },
         orders: flattenedOrders,
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getMyAddress = async (req, res, next) => {
+  try {
+    const userId = req.user?.userId;
+    const addressDocument = await Address.findOne({ userId }).select("address");
+
+    return res.status(200).json({
+      success: true,
+      data: addressDocument ? addressDocument.address : null,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const upsertMyAddress = async (req, res, next) => {
+  try {
+    const userId = req.user?.userId;
+    const { recipientName, phone, street, district, province, postcode } =
+      req.body;
+
+    const requiredFields = {
+      recipientName,
+      phone,
+      street,
+      province,
+      postcode,
+    };
+
+    const missingField = Object.entries(requiredFields).find(
+      ([, value]) => !String(value || "").trim(),
+    );
+
+    if (missingField) {
+      return res.status(400).json({
+        success: false,
+        message: `${missingField[0]} is required`,
+      });
+    }
+
+    const address = {
+      recipientName: recipientName.trim(),
+      phone: phone.trim(),
+      street: street.trim(),
+      district: String(district || "").trim(),
+      province: province.trim(),
+      postcode: postcode.trim(),
+    };
+
+    const addressDocument = await Address.findOneAndUpdate(
+      { userId },
+      { userId, address },
+      {
+        new: true,
+        upsert: true,
+        setDefaultsOnInsert: true,
+      },
+    ).select("address");
+
+    return res.status(200).json({
+      success: true,
+      message: "Address saved successfully",
+      data: addressDocument.address,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteMyAddress = async (req, res, next) => {
+  try {
+    const userId = req.user?.userId;
+    await Address.findOneAndDelete({ userId });
+
+    return res.status(200).json({
+      success: true,
+      message: "Address deleted successfully",
     });
   } catch (error) {
     next(error);
