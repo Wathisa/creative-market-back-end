@@ -22,6 +22,8 @@ const orderSchema = new mongoose.Schema(
       default: "pending",
     },
     paymentMethod: { type: String, default: "promptpay" },
+    paymentRef: { type: String, default: "" }, // เลขที่อ้างอิงการโอนเงิน
+    paidAt: { type: Date }, // วันที่ยืนยันการชำระเงิน
   },
   { timestamps: true }
 );

@@ -112,17 +112,14 @@ export const getOrderDetails = async (req, res, next) => {
   }
 };
 
-// 4. ปุ่มจำลองการชำระเงิน (Mock Payment) - เปลี่ยนสถานะเป็น paid
+// 4. อัปเดตสถานะ Order (สำหรับ Admin หรือ Mock Payment)
 export const updateOrderStatus = async (req, res, next) => {
   try {
     const { orderId } = req.params;
-    const { status } = req.body; // รับสถานะใหม่มา เช่น "paid" หรือ "cancelled"
+    const { status } = req.body;
 
-    const order = await Order.findByIdAndUpdate(
-      orderId,
-      { status },
-      { new: true }
-    );
+    // ค้นหาออเดอร์ก่อนเพื่อเช็คสถานะเดิมและเอาข้อมูลสินค้า
+    const order = await Order.findById(orderId);
 
     if (!order) {
       const error = new Error("ไม่พบคำสั่งซื้อนี้");
@@ -130,11 +127,38 @@ export const updateOrderStatus = async (req, res, next) => {
       throw error;
     }
 
+    // ถ้าเปลี่ยนสถานะเป็น cancelled และสถานะเดิมไม่ใช่ cancelled ให้คืนสต็อก
+    if (status === "cancelled" && order.status !== "cancelled") {
+      for (const item of order.items) {
+        await Product.findByIdAndUpdate(item.productId, {
+          $inc: { quantity: item.quantity },
+        });
+      }
+    }
+
+    // อัปเดตข้อมูล
+    order.status = status;
+    if (status === "paid") {
+      order.paidAt = new Date();
+    }
+
+    await order.save();
+
     res.status(200).json({
       success: true,
       message: `อัปเดตสถานะเป็น ${status} เรียบร้อยแล้ว`,
       data: order,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// 5. สำหรับ Admin: ดูรายการสั่งซื้อทั้งหมด
+export const getAllOrders = async (req, res, next) => {
+  try {
+    const orders = await Order.find().sort({ createdAt: -1 });
+    res.status(200).json({ success: true, data: orders });
   } catch (error) {
     next(error);
   }

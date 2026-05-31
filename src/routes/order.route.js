@@ -4,6 +4,7 @@ import {
   getMyOrders,
   getOrderDetails,
   updateOrderStatus,
+  getAllOrders,
 } from "../modules/orders/order.controller.js";
 import { verifyToken } from "../middlewares/login.auth.middleware.js";
 
@@ -13,6 +14,7 @@ export const router = Router();
 router.use(verifyToken);
 
 router.get("/", getMyOrders);
+router.get("/all", getAllOrders); // เพิ่ม Route นี้สำหรับ Admin
 router.get("/:orderId", getOrderDetails);
 router.post("/checkout", createOrder);
-router.patch("/status/:orderId", updateOrderStatus); // สำหรับปุ่มกดเปลี่ยนสถานะ mock promptpay
+router.patch("/status/:orderId", updateOrderStatus); 
