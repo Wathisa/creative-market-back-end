@@ -2,7 +2,7 @@ import { Order } from "../orders/order.model.js";
 import { User } from "../register/user.model.js";
 
 const STATUS_LABELS = {
-  pending: "ชำระแล้ว",
+  pending: "รอดำเนินการ",
   paid: "สำเร็จแล้ว",
   cancelled: "ยกเลิก",
 };
