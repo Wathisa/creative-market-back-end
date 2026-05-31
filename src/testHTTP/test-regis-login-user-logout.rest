@@ -22,7 +22,7 @@ POST http://localhost:7777/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "admintest2@example.com",
+  "email": "usertest1@example.com",
   "password": "password1234"
 }
 
