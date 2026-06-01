@@ -28,9 +28,9 @@ export const cancelExpiredOrders = async (expirationMinutes = 30) => {
         });
       }
 
-      // 3. อัปเดตสถานะเป็น 'cancelled'
-      order.status = "cancelled";
-      await order.save();
+      // 3. อัปเดตสถานะเป็น 'cancelled' โดยใช้ findByIdAndUpdate 
+      // เพื่อเลี่ยงปัญหา Validation ของฟิลด์ใหม่ (shippingAddress) ในออเดอร์เก่า
+      await Order.findByIdAndUpdate(order._id, { status: "cancelled" });
       
       console.log(`[Auto-Cancel] ยกเลิกออเดอร์ ${order._id} และคืนสต็อกเรียบร้อยแล้ว`);
     }
