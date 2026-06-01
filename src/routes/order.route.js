@@ -6,7 +6,7 @@ import {
   updateOrderStatus,
   getAllOrders,
 } from "../modules/orders/order.controller.js";
-import { verifyToken } from "../middlewares/login.auth.middleware.js";
+import { verifyToken, requireRole } from "../middlewares/login.auth.middleware.js";
 
 export const router = Router();
 
@@ -14,7 +14,9 @@ export const router = Router();
 router.use(verifyToken);
 
 router.get("/", getMyOrders);
-router.get("/all", getAllOrders); // เพิ่ม Route นี้สำหรับ Admin
+router.get("/all", requireRole(["admin"]), getAllOrders); // เฉพาะ Admin
 router.get("/:orderId", getOrderDetails);
 router.post("/checkout", createOrder);
+
+// สำหรับ Mock Payment หรือ Admin อัปเดตสถานะ
 router.patch("/status/:orderId", updateOrderStatus); 
