@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import mongoose from "mongoose";
-import cookieParser from "cookie-parser"; // will remove after upload to cloud (P'Montri's Add)
+import cookieParser from "cookie-parser";
 
 import { router as apiRoutes } from "./routes/index.js";
 import { connectDB } from "./config/mongodb.js";
@@ -11,26 +11,22 @@ import { startAutoCancelJob } from "./config/cron-jobs.js";
 
 const app = express();
 
-
 app.use(helmet());
 app.use(
   cors({
     origin: [
       "http://localhost:5173",
       "http://localhost:5174",
-      "http://localhost:5173",
       "https://creative-market-front-end-sprint-2-mu.vercel.app",
     ],
     credentials: true,
   }),
 );
 
-
 app.use(Limiter);
-
 app.use(express.json());
-app.use(express.static("public")); // will remove after upload to cloud
-app.use(cookieParser());   // will remove after upload to cloud (P'Montri's Add)
+app.use(express.static("public"));
+app.use(cookieParser());
 
 app.use("/api", apiRoutes);
 
@@ -58,12 +54,9 @@ const PORT = 7777;
 
 await connectDB();
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}❤️`);
-});
-��ัติ
+// Start background job for auto-canceling expired orders
 startAutoCancelJob();
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}❤️`);
+  console.log(`Server running on port ${PORT} ❤️`);
 });
