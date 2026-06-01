@@ -1,0 +1,14 @@
+### 1. โปรไฟล์ของ user ที่ล็อกอิน
+GET http://localhost:7777/api/user-dashboard/me
+
+### 2. Summary
+GET http://localhost:7777/api/user-dashboard/my-summary
+
+### 3. Orders status
+GET http://localhost:7777/api/user-dashboard/my-status
+
+### 4. Orders history
+GET http://localhost:7777/api/user-dashboard/my-history
+
+### 5. My orders
+GET http://localhost:7777/api/user-dashboard/my-orders

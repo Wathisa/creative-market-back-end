@@ -21,7 +21,7 @@ POST http://localhost:7777/api/cart/add
 Content-Type: application/json
 
 {
-  "productId": "6a1685fc96d193295d2a496a", 
+  "productId": "6a17d62a366cc8cf0470d4d8", 
   "quantity": 1
 }
 
@@ -53,7 +53,7 @@ PATCH http://localhost:7777/api/cart/update
 Content-Type: application/json
 
 {
-  "productId": "6a17c381d7b9296b299277da", 
+  "productId": "6a17d62a366cc8cf0470d4d8", 
   "quantity": 1
 }
 
