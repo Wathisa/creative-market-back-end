@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { Order } from "./order.model.js";
 import { Cart } from "../cart/cart.model.js";
 import { Product } from "../products/product.model.js";
-import { Address } from "../addresses/address.model.js";
+import { Address } from "../address/address.model.js";
 
 // 1. สร้าง Order จากตะกร้า (Checkout)
 export const createOrder = async (req, res, next) => {
