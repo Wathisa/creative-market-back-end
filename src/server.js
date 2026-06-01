@@ -7,6 +7,7 @@ import cookieParser from "cookie-parser"; // will remove after upload to cloud (
 import { router as apiRoutes } from "./routes/index.js";
 import { connectDB } from "./config/mongodb.js";
 import { Limiter } from "./middlewares/rateLimit.js";
+import { startAutoCancelJob } from "./config/cron-jobs.js";
 
 const app = express();
 
@@ -56,6 +57,12 @@ app.use((error, req, res, next) => {
 const PORT = 7777;
 
 await connectDB();
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}❤️`);
+});
+��ัติ
+startAutoCancelJob();
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}❤️`);
