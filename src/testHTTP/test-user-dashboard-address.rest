@@ -1,0 +1,28 @@
+### 1. Login as User first to receive cookie
+# @name userLogin
+POST http://localhost:7777/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admintest2@example.com",
+  "password": "password1234"
+}
+
+### 2. Get My Address
+GET http://localhost:7777/api/user-dashboard/my-address
+
+### 3. Create or Update My Address
+PUT http://localhost:7777/api/user-dashboard/my-address
+Content-Type: application/json
+
+{
+  "recipientName": "Luna Atelier",
+  "phone": "081-234-5678",
+  "street": "123 ถนนสุขุมวิท",
+  "district": "วัฒนา",
+  "province": "กรุงเทพมหานคร",
+  "postcode": "10110"
+}
+
+### 4. Delete My Address
+DELETE http://localhost:7777/api/user-dashboard/my-address

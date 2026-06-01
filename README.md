@@ -1,9 +1,12 @@
 # 🎨 Creative Market - Human-Made Art Marketplace (Backend)
 
 **Creative Market Backend** is a RESTful API service powering a digital marketplace dedicated 100% to human-made art. Built with Node.js + Express.js and connected to MongoDB, it handles all business logic for products, users, and cart management.
-
-[![API Status](https://img.shields.io/badge/api-online-brightgreen.svg)](https://creative-market-back-end.onrender.com/)
-
+---
+[API Status]
+(https://creative-market-back-end.onrender.com/)
+---
+Software Architecture & Project Blueprint
+https://www.figma.com/board/knELaqlKa8ARUQofT0FwEE/Commit-no-Jutsu?node-id=480-986&t=c1UFc62fAUL5XE5Y-0
 ---
 
 ## ✨ Key Features
