@@ -4,7 +4,7 @@ POST http://localhost:7777/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "admintest2@example.com",
+  "email": "usertest1@example.com",
   "password": "password1234"
 }
 
@@ -16,12 +16,12 @@ PUT http://localhost:7777/api/user-dashboard/my-address
 Content-Type: application/json
 
 {
-  "recipientName": "Luna Atelier",
-  "phone": "081-234-5678",
-  "street": "123 ถนนสุขุมวิท",
-  "district": "วัฒนา",
-  "province": "กรุงเทพมหานคร",
-  "postcode": "10110"
+  "recipientName": "My Father",
+  "phone": "0848748456",
+  "street": "เชียงใหม่-ลำพูน",
+  "district": "เมือง",
+  "province": "เชียงใหม่",
+  "postcode": "50845"
 }
 
 ### 4. Delete My Address

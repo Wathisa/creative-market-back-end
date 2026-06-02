@@ -15,6 +15,7 @@ const CATEGORY_COLORS = {
 };
 
 const getCustomerLookup = async (orders) => {
+  //ดึง username/email ของ user ทุกคนที่มี order แล้วทำเป็น Map สำหรับ lookup เร็ว
   const userIds = [
     ...new Set(orders.map((order) => order.userId).filter(Boolean)),
   ];
@@ -27,7 +28,10 @@ const getCustomerLookup = async (orders) => {
   );
 };
 
-const flattenOrders = (orders, customerLookup) =>
+const flattenOrders = (
+  orders,
+  customerLookup, //แปลง orders หลายใบให้เป็น list แบนของ item แต่ละชิ้น พร้อมชื่อ customer
+) =>
   orders.flatMap((order) =>
     order.items.map((item, index) => ({
       id: `${order._id}-${item.productId}-${index}`,
@@ -50,6 +54,7 @@ const flattenOrders = (orders, customerLookup) =>
   );
 
 const getMetricsFromPaidOrders = (paidOrders) => {
+  //คำนวณ totalSales, จำนวน order, จำนวนชิ้น, ค่าเฉลี่ยต่อ order
   const totalSales = paidOrders.reduce(
     (sum, order) => sum + order.totalPrice,
     0,
@@ -70,6 +75,7 @@ const getMetricsFromPaidOrders = (paidOrders) => {
 };
 
 const getSalesOverview = (paidOrders) => {
+  //สรุปยอดขายย้อนหลัง 7 วัน แยกตามวัน
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -99,6 +105,7 @@ const getSalesOverview = (paidOrders) => {
 };
 
 const getCategoryBreakdown = (paidOrders) => {
+  //สรุปจำนวนชิ้นที่ขายได้แยกตาม category พร้อมสี
   const categoryTotals = new Map();
 
   paidOrders.forEach((order) => {
@@ -119,11 +126,13 @@ const getCategoryBreakdown = (paidOrders) => {
 };
 
 const loadOrdersWithProducts = () =>
+  //ดึง order ทั้งหมดพร้อม populate ข้อมูล product
   Order.find({})
     .sort({ createdAt: -1 })
     .populate("items.productId", "images artist category");
 
 export const getAdminOverview = async (req, res, next) => {
+  //หน้า overview — metrics + กราฟ 7 วัน + category + 6 order ล่าสุด
   try {
     const orders = await loadOrdersWithProducts();
     const paidOrders = orders.filter((order) => order.status === "paid");
@@ -146,6 +155,7 @@ export const getAdminOverview = async (req, res, next) => {
 };
 
 export const getAdminOrders = async (req, res, next) => {
+  //หน้า orders — order ทั้งหมด + summary นับตาม status
   try {
     const orders = await loadOrdersWithProducts();
     const customerLookup = await getCustomerLookup(orders);
@@ -174,6 +184,7 @@ export const getAdminOrders = async (req, res, next) => {
 };
 
 export const getAdminSales = async (req, res, next) => {
+  //หน้า sales — metrics + กราฟ 7 วัน + category (เฉพาะ paid)
   try {
     const orders = await loadOrdersWithProducts();
     const paidOrders = orders.filter((order) => order.status === "paid");

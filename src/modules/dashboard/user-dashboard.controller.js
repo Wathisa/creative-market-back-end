@@ -8,13 +8,17 @@ const STATUS_LABELS = {
   cancelled: "ยกเลิก",
 };
 
-const flattenOrderItems = (orders) =>
+const flattenOrderItems = (
+  orders, //แปลง orders หลายใบให้เป็น list แบนของ item แต่ละชิ้น
+) =>
   orders.flatMap((order) =>
     order.items.map((item, index) => ({
       id: `${order._id}-${item.productId}-${index}`,
       orderId: order._id,
-      productId: item.productId,
+      productId: item.productId?._id || item.productId,
       name: item.name,
+      artist: item.productId?.artist || "-",
+      image: item.productId?.images?.[0] || "",
       price: item.price,
       quantity: item.quantity,
       lineTotal: item.price * item.quantity,
@@ -25,6 +29,7 @@ const flattenOrderItems = (orders) =>
   );
 
 export const getDashboardMe = async (req, res, next) => {
+  // ดึงข้อมูล profile (username, email, role)
   try {
     const userId = req.user?.userId;
     const user = await User.findById(userId).select("username email role");
@@ -51,6 +56,7 @@ export const getDashboardMe = async (req, res, next) => {
 };
 
 export const getMySummary = async (req, res, next) => {
+  //ดึงสถิติ — จำนวน order และยอดเงินที่จ่ายไปแล้ว (status: paid เท่านั้น)
   try {
     const userId = req.user?.userId;
     const paidOrders = await Order.find({ userId, status: "paid" }).select(
@@ -75,11 +81,13 @@ export const getMySummary = async (req, res, next) => {
 };
 
 export const getMyStatus = async (req, res, next) => {
+  //ดึงเฉพาะ order ที่ยัง pending (รอชำระ)
   try {
     const userId = req.user?.userId;
     const orders = await Order.find({ userId, status: "pending" })
       .sort({ createdAt: -1 })
-      .select("items status createdAt");
+      .select("items status createdAt")
+      .populate("items.productId", "images artist");
 
     return res.status(200).json({
       success: true,
@@ -91,11 +99,13 @@ export const getMyStatus = async (req, res, next) => {
 };
 
 export const getMyHistory = async (req, res, next) => {
+  //ดึงเฉพาะ order ที่ paid แล้ว (ประวัติ)
   try {
     const userId = req.user?.userId;
     const orders = await Order.find({ userId, status: "paid" })
       .sort({ createdAt: -1 })
-      .select("items status createdAt");
+      .select("items status createdAt")
+      .populate("items.productId", "images artist");
 
     return res.status(200).json({
       success: true,
@@ -107,11 +117,13 @@ export const getMyHistory = async (req, res, next) => {
 };
 
 export const getMyOrders = async (req, res, next) => {
+  //ดึง order ทั้งหมด พร้อม summary รวม
   try {
     const userId = req.user?.userId;
     const orders = await Order.find({ userId })
       .sort({ createdAt: -1 })
-      .select("items totalPrice status createdAt");
+      .select("items totalPrice status createdAt")
+      .populate("items.productId", "images artist");
 
     const paidOrders = orders.filter((order) => order.status === "paid");
     const flattenedOrders = flattenOrderItems(orders);
@@ -136,6 +148,7 @@ export const getMyOrders = async (req, res, next) => {
 };
 
 export const getMyAddress = async (req, res, next) => {
+  //ดึงที่อยู่จัดส่งของ user
   try {
     const userId = req.user?.userId;
     const addressDocument = await Address.findOne({ userId }).select("address");
@@ -150,6 +163,7 @@ export const getMyAddress = async (req, res, next) => {
 };
 
 export const upsertMyAddress = async (req, res, next) => {
+  //บันทึกหรืออัปเดตที่อยู่ (ถ้ามีอยู่แล้วก็ update ถ้ายังไม่มีก็ insert)
   try {
     const userId = req.user?.userId;
     const { recipientName, phone, street, district, province, postcode } =
@@ -204,6 +218,7 @@ export const upsertMyAddress = async (req, res, next) => {
 };
 
 export const deleteMyAddress = async (req, res, next) => {
+  //ลบที่อยู่
   try {
     const userId = req.user?.userId;
     await Address.findOneAndDelete({ userId });

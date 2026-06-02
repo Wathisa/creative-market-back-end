@@ -29,11 +29,13 @@ export const createOrder = async (req, res, next) => {
       const product = item.productId;
 
       // บัคจุดที่ 1: สินค้าถูกลบออกจากระบบไปแล้ว (Null check)
-      if (!product) continue; 
+      if (!product) continue;
 
       // บัคจุดที่ 2: เช็คสต็อกอีกรอบก่อนหักเงิน (ป้องกัน Race Condition)
       if (product.quantity < item.quantity) {
-        const error = new Error(`สินค้า ${product.name} ในคลังไม่พอ (เหลือ ${product.quantity})`);
+        const error = new Error(
+          `สินค้า ${product.name} ในคลังไม่พอ (เหลือ ${product.quantity})`,
+        );
         error.status = 400;
         throw error;
       }
@@ -50,12 +52,14 @@ export const createOrder = async (req, res, next) => {
 
       // ทำการหักสต็อกสินค้าทันที (แบบ Atomic ป้องกันสต็อกติดลบ)
       await Product.findByIdAndUpdate(product._id, {
-        $inc: { quantity: -item.quantity }
+        $inc: { quantity: -item.quantity },
       });
     }
 
     if (orderItems.length === 0) {
-      const error = new Error("สินค้าในตะกร้าไม่พร้อมสั่งซื้อ (อาจถูกลบไปแล้ว)");
+      const error = new Error(
+        "สินค้าในตะกร้าไม่พร้อมสั่งซื้อ (อาจถูกลบไปแล้ว)",
+      );
       error.status = 400;
       throw error;
     }
@@ -112,7 +116,7 @@ export const getOrderDetails = async (req, res, next) => {
   }
 };
 
-// 4. ปุ่มจำลองการชำระเงิน (Mock Payment) - เปลี่ยนสถานะเป็น paid
+// 4. ปุ่มจำลองการ้าเงิน (Mock Payment) - เปลี่ยนสถานะเป็น paid
 export const updateOrderStatus = async (req, res, next) => {
   try {
     const { orderId } = req.params;
@@ -121,7 +125,7 @@ export const updateOrderStatus = async (req, res, next) => {
     const order = await Order.findByIdAndUpdate(
       orderId,
       { status },
-      { new: true }
+      { new: true },
     );
 
     if (!order) {
