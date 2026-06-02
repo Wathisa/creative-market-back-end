@@ -28,12 +28,12 @@ Content-Type: application/json
 }
 
 ### PUT
-PUT http://localhost:7777/api/products/6a1685fc96d193295d2a496a
+PUT http://localhost:7777/api/products/6a17d6fa366cc8cf0470d4d9
 Content-Type: application/json
 
-{ "images": [
-        "https://res.cloudinary.com/duc5gow6f/image/upload/v1779948614/frieren-01_jbkbxq.png"
-      ]}
+{
+  "quantity": 20
+}
 
 ### Delete
 DELETE http://localhost:7777/api/products/6a1687df96d193295d2a496c

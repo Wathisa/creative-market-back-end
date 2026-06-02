@@ -46,8 +46,8 @@ const flattenOrders = (
       customer: customerLookup.get(order.userId) || "-",
       status: order.status,
       statusLabel: STATUS_LABELS[order.status] || order.status,
-      courier: null,
-      trackingNumber: null,
+      courier: order.courier || "",
+      trackingNumber: order.trackingNumber || "",
       createdAt: order.createdAt,
       date: order.createdAt,
     })),
@@ -196,6 +196,38 @@ export const getAdminSales = async (req, res, next) => {
         ...metrics,
         salesOverview: getSalesOverview(paidOrders),
         categoryBreakdown: getCategoryBreakdown(paidOrders),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateOrderShipping = async (req, res, next) => {
+  try {
+    const { orderId } = req.params;
+    const { courier, trackingNumber } = req.body;
+
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    order.courier = String(courier || "").trim();
+    order.trackingNumber = String(trackingNumber || "").trim();
+    await order.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Shipping details updated successfully",
+      data: {
+        orderId: order._id,
+        courier: order.courier,
+        trackingNumber: order.trackingNumber,
       },
     });
   } catch (error) {

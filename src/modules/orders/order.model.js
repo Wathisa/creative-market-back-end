@@ -22,6 +22,8 @@ const orderSchema = new mongoose.Schema(
       default: "pending",
     },
     paymentMethod: { type: String, default: "promptpay" },
+    courier: { type: String, default: "" },
+    trackingNumber: { type: String, default: "" },
   },
   { timestamps: true }
 );

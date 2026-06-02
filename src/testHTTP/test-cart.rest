@@ -21,7 +21,7 @@ POST http://localhost:7777/api/cart/add
 Content-Type: application/json
 
 {
-  "productId": "6a17d62a366cc8cf0470d4d8", 
+  "productId": "6a17c675e44f15d5e0a44c43", 
   "quantity": 1
 }
 

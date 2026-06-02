@@ -24,6 +24,8 @@ const flattenOrderItems = (
       lineTotal: item.price * item.quantity,
       status: order.status,
       statusLabel: STATUS_LABELS[order.status] || order.status.toUpperCase(),
+      courier: order.courier || "",
+      trackingNumber: order.trackingNumber || "",
       createdAt: order.createdAt,
     })),
   );
@@ -86,7 +88,7 @@ export const getMyStatus = async (req, res, next) => {
     const userId = req.user?.userId;
     const orders = await Order.find({ userId, status: "pending" })
       .sort({ createdAt: -1 })
-      .select("items status createdAt")
+      .select("items status courier trackingNumber createdAt")
       .populate("items.productId", "images artist");
 
     return res.status(200).json({
@@ -104,7 +106,7 @@ export const getMyHistory = async (req, res, next) => {
     const userId = req.user?.userId;
     const orders = await Order.find({ userId, status: "paid" })
       .sort({ createdAt: -1 })
-      .select("items status createdAt")
+      .select("items status courier trackingNumber createdAt")
       .populate("items.productId", "images artist");
 
     return res.status(200).json({
@@ -122,7 +124,7 @@ export const getMyOrders = async (req, res, next) => {
     const userId = req.user?.userId;
     const orders = await Order.find({ userId })
       .sort({ createdAt: -1 })
-      .select("items totalPrice status createdAt")
+      .select("items totalPrice status courier trackingNumber createdAt")
       .populate("items.productId", "images artist");
 
     const paidOrders = orders.filter((order) => order.status === "paid");
