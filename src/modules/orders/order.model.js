@@ -16,12 +16,18 @@ const orderSchema = new mongoose.Schema(
       },
     ],
     totalPrice: { type: Number, required: true },
+    shippingAddress: {
+      name: { type: String, required: true },
+      detail: { type: String, required: true },
+    },
     status: {
       type: String,
       enum: ["pending", "paid", "cancelled"],
       default: "pending",
     },
     paymentMethod: { type: String, default: "promptpay" },
+    paymentRef: { type: String, default: "" }, // เลขที่อ้างอิงการโอนเงิน
+    paidAt: { type: Date }, // วันที่ยืนยันการชำระเงิน
   },
   { timestamps: true }
 );

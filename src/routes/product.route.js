@@ -1,3 +1,5 @@
+import { upload } from "../middlewares/upload.js";
+
 import express from "express";
 import {
   getProducts,
@@ -15,7 +17,7 @@ router.get("/categories", getCategories);
 
 router.get("/", getProducts);
 
-router.post("/", createProduct);
+router.post("/", upload.single("image"), createProduct);
 
 router.put("/:id", updateProduct);
 

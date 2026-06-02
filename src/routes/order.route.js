@@ -4,14 +4,19 @@ import {
   getMyOrders,
   getOrderDetails,
   updateOrderStatus,
+  getAllOrders,
 } from "../modules/orders/order.controller.js";
+import { verifyToken, requireRole } from "../middlewares/login.auth.middleware.js";
 
 export const router = Router();
 
-// ทุกอย่างต้อง Login ก่อน (รอใส่ Middleware ของเพื่อน)
-// router.use(protect); 
+// ทุก Request ใน Order ต้องผ่านการตรวจสอบ Token
+router.use(verifyToken);
 
 router.get("/", getMyOrders);
+router.get("/all", requireRole(["admin"]), getAllOrders); // เฉพาะ Admin
 router.get("/:orderId", getOrderDetails);
 router.post("/checkout", createOrder);
-router.patch("/status/:orderId", updateOrderStatus); // สำหรับปุ่มกดเปลี่ยนสถานะ mock promptpay
+
+// สำหรับ Mock Payment หรือ Admin อัปเดตสถานะ
+router.patch("/status/:orderId", updateOrderStatus); 
