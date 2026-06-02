@@ -1,16 +1,45 @@
-### สร้างคำสั่งซื้อ (Checkout จากตะกร้า)
-POST http://localhost:7777/api/orders/checkout
+### 1. Login (User)
+# @name login
+POST http://localhost:7777/api/auth/login
+Content-Type: application/json
 
-### ดึงประวัติการสั่งซื้อทั้งหมด
+{
+  "email": "admintest2@example.com",
+  "password": "password1234"
+}
+
+### 2. สร้างคำสั่งซื้อ (Checkout จากตะกร้า)
+# ต้องระบุ addressId และสามารถระบุ paymentMethod ได้
+POST http://localhost:7777/api/orders/checkout
+Content-Type: application/json
+
+{
+  "addressId": "ใส่ไอดีที่อยู่ตรงนี้",
+  "paymentMethod": "promptpay"
+}
+
+### 3. ดึงประวัติการสั่งซื้อทั้งหมด (ของตัวเองเท่านั้น)
 GET http://localhost:7777/api/orders/
 
-### ดูรายละเอียดคำสั่งซื้อรายอัน
+### 4. ดูรายละเอียดคำสั่งซื้อรายอัน (พร้อมเช็ค Ownership)
+# ลองเปลี่ยน ID เป็นของคนอื่นเพื่อทดสอบความปลอดภัย (ควรได้ 404)
 GET http://localhost:7777/api/orders/ไอดีของออเดอร์
 
-### อัปเดตสถานะเป็นจ่ายเงินแล้ว (Mock PromptPay Success)
+### 5. อัปเดตสถานะเป็นจ่ายเงินแล้ว (Mock PromptPay Success)
 PATCH http://localhost:7777/api/orders/status/ไอดีของออเดอร์
 Content-Type: application/json
 
 {
   "status": "paid"
 }
+
+### 6. ยกเลิกออเดอร์ (เพื่อทดสอบการคืนสต็อก)
+PATCH http://localhost:7777/api/orders/status/ไอดีของออเดอร์
+Content-Type: application/json
+
+{
+  "status": "cancelled"
+}
+
+### 7. สำหรับ Admin เท่านั้น: ดูรายการสั่งซื้อทั้งหมดในระบบ
+GET http://localhost:7777/api/orders/all
