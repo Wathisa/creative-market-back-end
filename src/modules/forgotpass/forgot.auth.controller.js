@@ -24,14 +24,32 @@ export const forgotPassword = async (req, res, next) => {
 
     const resetUrl = `http://localhost:5173/reset-password/${resetToken}`; 
 
-    const message = `
-      คุณได้รับอีเมลนี้เนื่องจากคุณได้ทำการขอรีเซ็ตรหัสผ่าน
-      โปรดคลิกที่ลิงก์ด้านล่างเพื่อรีเซ็ตรหัสผ่านของคุณ:
-      \n\n
-      ${resetUrl}
-      \n\n
-      หากคุณไม่ได้เป็นผู้ร้องขอ โปรดเพิกเฉยต่ออีเมลฉบับนี้
-    `;
+   const message = `
+  <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f3f4f6; border-radius: 12px;">
+    <div style="background-color: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); text-align: center;">
+      
+      <h2 style="color: #1e1a3d; margin-bottom: 20px; font-size: 32px;">รีเซ็ตรหัสผ่านของคุณ</h2>
+      
+      <p style="color: #4b5563; font-size: 22px; line-height: 1.6; margin-bottom: 30px;">
+        คุณได้รับอีเมลฉบับนี้เนื่องจากมีการร้องขอให้รีเซ็ตรหัสผ่านสำหรับบัญชีของคุณ<br>
+        โปรดคลิกที่ปุ่มด้านล่างเพื่อตั้งรหัสผ่านใหม่:
+      </p>
+      
+      <a href="${resetUrl}" style="display: inline-block; padding: 14px 32px; background-color: #7b74c4; color: #ffffff; text-decoration: none; font-size: 22px; font-weight: bold; border-radius: 50px; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(123, 116, 196, 0.3);">
+        คลิกเพื่อรีเซ็ตรหัสผ่าน
+      </a>
+      
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin-bottom: 20px;">
+      
+      <p style="color: #9ca3af; font-size: 18px; text-align: left; line-height: 1.5;">
+        <strong>หมายเหตุ:</strong> ลิงก์นี้จะหมดอายุภายในระยะเวลาที่กำหนด หากคุณไม่ได้เป็นผู้ร้องขอการรีเซ็ตรหัสผ่านนี้ โปรดเพิกเฉยต่ออีเมลฉบับนี้ รหัสผ่านของคุณจะยังคงปลอดภัย<br><br>
+        หากปุ่มด้านบนไม่ทำงาน คุณสามารถคัดลอกและวางลิงก์ด้านล่างนี้ในเว็บเบราว์เซอร์ของคุณ:<br>
+        <a href="${resetUrl}" style="color: #7b74c4; word-break: break-all;">${resetUrl}</a>
+      </p>
+
+    </div>
+  </div>
+`;
 
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
@@ -46,7 +64,7 @@ export const forgotPassword = async (req, res, next) => {
       from: process.env.SMTP_FROM,
       to: user.email,
       subject: 'คำขอรีเซ็ตรหัสผ่าน',
-      text: message,
+      html: message,
     };
 
     await transporter.sendMail(mailOptions);
