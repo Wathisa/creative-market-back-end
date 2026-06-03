@@ -9,12 +9,11 @@ Content-Type: application/json
 }
 
 ### 2. สร้างคำสั่งซื้อ (Checkout จากตะกร้า)
-# ต้องระบุ addressId และสามารถระบุ paymentMethod ได้
+# ระบบจะดึงที่อยู่ล่าสุดจากโปรไฟล์ให้อัตโนมัติ (1 User : 1 Address)
 POST http://localhost:7777/api/orders/checkout
 Content-Type: application/json
 
 {
-  "addressId": "ใส่ไอดีที่อยู่ตรงนี้",
   "paymentMethod": "promptpay"
 }
 
