@@ -46,3 +46,6 @@ GET http://localhost:7777/api/products/cybernecklace
 
 ### Search products 
 GET http://localhost:7777/api/products?search=c
+
+### Search product แบบจำกัดจำนวน
+GET http://localhost:7777/api/products?search=c&page=1&limit=12
