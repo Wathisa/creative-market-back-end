@@ -18,7 +18,21 @@ export const createOrder = async (req, res, next) => {
       throw error;
     }
 
-    // ดึงข้อมูลที่อยู่เดียวของผู้ใช้เพื่อทำ Snapshot
+    // [NEW] 1. ล้างออเดอร์ Pending เดิมและคืนสต็อกก่อนเริ่มสร้างอันใหม่
+    // เพื่อป้องกันการจองของซ้ำซ้อนในกรณีลูกค้ากด Checkout หลายรอบ
+    const existingPendingOrder = await Order.findOne({ userId, status: "pending" }).session(session);
+    if (existingPendingOrder) {
+      for (const item of existingPendingOrder.items) {
+        await Product.findByIdAndUpdate(
+          item.productId, 
+          { $inc: { quantity: item.quantity } }, 
+          { session }
+        );
+      }
+      await Order.deleteOne({ _id: existingPendingOrder._id }).session(session);
+    }
+
+    // 2. ดึงข้อมูลที่อยู่เดียวของผู้ใช้เพื่อทำ Snapshot
     const addressDoc = await Address.findOne({ userId }).session(session);
     if (!addressDoc || !addressDoc.address) {
       const error = new Error("ไม่พบข้อมูลที่อยู่จัดส่ง กรุณาระบุที่อยู่ในหน้า Profile ก่อนสั่งซื้อ");
@@ -28,7 +42,7 @@ export const createOrder = async (req, res, next) => {
 
     const addr = addressDoc.address;
 
-    // ดึงข้อมูลตะกร้าล่าสุด
+    // 3. ดึงข้อมูลตะกร้าล่าสุด
     const cart = await Cart.findOne({ userId }).populate("items.productId").session(session);
 
     if (!cart || cart.items.length === 0) {
@@ -40,7 +54,7 @@ export const createOrder = async (req, res, next) => {
     let totalPrice = 0;
     const orderItems = [];
 
-    // วนลูปเช็คและหักสต็อกสินค้าทีละชิ้น
+    // 4. วนลูปเช็คและหักสต็อกสินค้าทีละชิ้น
     for (const item of cart.items) {
       const product = item.productId;
 
@@ -79,7 +93,7 @@ export const createOrder = async (req, res, next) => {
       });
     }
 
-    // สร้าง Order ใหม่
+    // 5. สร้าง Order ใหม่
     const newOrder = await Order.create([{
       userId,
       items: orderItems,
@@ -96,8 +110,9 @@ export const createOrder = async (req, res, next) => {
       paymentMethod,
     }], { session });
 
-    // ล้างตะกร้าทิ้งเมื่อสั่งซื้อสำเร็จ
-    await Cart.findOneAndDelete({ userId }, { session });
+    // ⛔️ [REMOVE] บรรทัด await Cart.findOneAndDelete({ userId }, { session }); ออก!!!
+    // เราจะยังไม่ลบตะกร้าในขั้นตอนนี้ เพื่อให้ลูกค้าสามารถกลับมาดูตะกร้าได้จนกว่าจะจ่ายเงิน
+    console.log(`[Order] Order created for User ${userId}. Cart is NOT deleted.`);
 
     // ยืนยัน Transaction
     await session.commitTransaction();
@@ -105,7 +120,7 @@ export const createOrder = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message: "สร้างคำสั่งซื้อสำเร็จและตัดสต็อกเรียบร้อย",
+      message: "สร้างคำสั่งซื้อสำเร็จและตัดสต็อกเรียบร้อย (ตะกร้ายังคงอยู่จนกว่าจะชำระเงิน)",
       data: newOrder[0],
     });
   } catch (error) {
@@ -175,13 +190,17 @@ export const updateOrderStatus = async (req, res, next) => {
     order.status = status;
     if (status === "paid") {
       order.paidAt = new Date();
+      
+      // 🔔 [NEW] เมื่อชำระเงินสำเร็จ (paid) ให้ล้างตะกร้าสินค้าทันที
+      console.log(`[Order] Payment confirmed for Order ${order._id}. Clearing cart for User ${order.userId}...`);
+      await Cart.findOneAndDelete({ userId: order.userId });
     }
 
     await order.save();
 
     res.status(200).json({
       success: true,
-      message: `อัปเดตสถานะเป็น ${status} เรียบร้อยแล้ว`,
+      message: `อัปเดตสถานะเป็น ${status} เรียบร้อยแล้ว ${status === 'paid' ? 'และล้างตะกร้าสินค้าแล้ว' : ''}`,
       data: order,
     });
   } catch (error) {

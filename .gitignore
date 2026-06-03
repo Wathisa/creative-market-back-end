@@ -2,7 +2,8 @@ node_modules
 
 .env
 
-Agent.md
-CART_PATTERN.md
-API_DOCS_FRONTEND.md
-BACKEND_GUIDE.md
+# Ignore all markdown files
+*.md
+
+# But do not ignore README.md
+!README.md
