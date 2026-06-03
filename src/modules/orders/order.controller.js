@@ -10,7 +10,7 @@ export const createOrder = async (req, res, next) => {
   session.startTransaction();
   try {
     const userId = req.user?.userId;
-    const { addressId, paymentMethod = "promptpay" } = req.body;
+    const { paymentMethod = "promptpay" } = req.body;
 
     if (!userId) {
       const error = new Error("กรุณาเข้าสู่ระบบก่อนสั่งซื้อ");
@@ -18,19 +18,15 @@ export const createOrder = async (req, res, next) => {
       throw error;
     }
 
-    if (!addressId) {
-      const error = new Error("กรุณาระบุที่อยู่สำหรับจัดส่ง");
+    // ดึงข้อมูลที่อยู่เดียวของผู้ใช้เพื่อทำ Snapshot
+    const addressDoc = await Address.findOne({ userId }).session(session);
+    if (!addressDoc || !addressDoc.address) {
+      const error = new Error("ไม่พบข้อมูลที่อยู่จัดส่ง กรุณาระบุที่อยู่ในหน้า Profile ก่อนสั่งซื้อ");
       error.status = 400;
       throw error;
     }
 
-    // ดึงข้อมูลที่อยู่เพื่อทำ Snapshot
-    const address = await Address.findOne({ _id: addressId, userId }).session(session);
-    if (!address) {
-      const error = new Error("ไม่พบข้อมูลที่อยู่ หรือคุณไม่มีสิทธิ์ใช้ที่อยู่นี้");
-      error.status = 404;
-      throw error;
-    }
+    const addr = addressDoc.address;
 
     // ดึงข้อมูลตะกร้าล่าสุด
     const cart = await Cart.findOne({ userId }).populate("items.productId").session(session);
@@ -89,8 +85,12 @@ export const createOrder = async (req, res, next) => {
       items: orderItems,
       totalPrice,
       shippingAddress: {
-        name: address.name,
-        detail: address.detail
+        recipientName: addr.recipientName,
+        phone: addr.phone,
+        street: addr.street,
+        district: addr.district,
+        province: addr.province,
+        postcode: addr.postcode
       },
       status: "pending",
       paymentMethod,

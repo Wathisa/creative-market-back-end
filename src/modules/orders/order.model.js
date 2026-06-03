@@ -17,8 +17,12 @@ const orderSchema = new mongoose.Schema(
     ],
     totalPrice: { type: Number, required: true },
     shippingAddress: {
-      name: { type: String, required: true },
-      detail: { type: String, required: true },
+      recipientName: { type: String, required: true },
+      phone: { type: String, required: true },
+      street: { type: String, required: true },
+      district: { type: String, trim: true, default: "" },
+      province: { type: String, required: true },
+      postcode: { type: String, required: true },
     },
     status: {
       type: String,
