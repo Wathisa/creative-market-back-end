@@ -34,3 +34,20 @@ export const seedProductsDirectly = async (req, res) => {
     });
   }
 };
+
+export const updateAllQuantities = async (req, res, next) => {
+  try {
+    // 1. สั่งอัปเดตสินค้า "ทุกชิ้น" ใน Database ({}) ให้ฟิล์ด quantity กลายเป็น 99
+    // ข้อมูลถูกส่งไปทำงานที่ Database ชั้นเดียวตรงๆ เลยค่ะ อ่านง่ายมาก
+    const result = await Product.updateMany({}, { $set: { quantity: 99 } });
+
+    // 2. ส่ง Response กลับไปบอกจำนวนรายการที่อัปเดตสำเร็จ
+    res.status(200).json({
+      success: true,
+      message: `เสกสินค้าทั้งหมดจำนวน ${result.matchedCount} ชิ้นให้กลายเป็น 99 ชิ้นเรียบร้อยค่ะ!`,
+      modifiedCount: result.modifiedCount,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

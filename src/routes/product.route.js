@@ -9,7 +9,7 @@ import {
   getCategories,
   getProductBySlug,
 } from "../modules/products/product.controller.js";
-import { seedProductsDirectly } from "../utils/seed.js";
+import { seedProductsDirectly, updateAllQuantities } from "../utils/seed.js";
 
 export const router = express.Router();
 
@@ -27,3 +27,5 @@ router.delete("/:id", deleteProduct);
 router.get("/:slug", getProductBySlug);
 
 router.post("/seed-direct", seedProductsDirectly);
+//ใช้ PATCH เพราะเป็นการอัปเดตข้อมูลบางส่วนตามหลัก Best Practice
+router.patch("/update-quantity-all", updateAllQuantities);
