@@ -36,7 +36,7 @@ Content-Type: application/json
       ]}
 
 ### Delete
-DELETE http://localhost:7777/api/products/6a1d805315aecba3d0cad3e7
+DELETE http://localhost:7777/api/products/6a1d98e750fa7930765ead62
 
 ### GET CATEGORIES
 GET http://localhost:7777/api/products/categories
@@ -49,3 +49,9 @@ GET http://localhost:7777/api/products?search=c
 
 ### Search product แบบจำกัดจำนวน
 GET http://localhost:7777/api/products?search=c&page=1&limit=12
+
+### ADD Product 100 products
+POST http://localhost:7777/api/products/seed-direct
+
+### ADD ALL Product Quantity 99
+PATCH http://localhost:7777/api/products/update-quantity-all

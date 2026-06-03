@@ -26,17 +26,11 @@ export const getProducts = async (req, res, next) => {
       ];
     }
 
-    const pageNumber = Number(page);
-    const limitNumber = limit ? Number(limit) : 0;
-    const skip = limitNumber ? (pageNumber - 1) * limitNumber : 0;
+    const pageNumber = Math.max(1, parseInt(page, 10) || 1);
+    const limitNumber = Math.max(1, parseInt(limit, 10) || 12);
+    const skip = (pageNumber - 1) * limitNumber;
 
-    let productQuery = Product.find(query);
-
-    if (limitNumber) {
-      productQuery = productQuery.skip(skip).limit(limitNumber);
-    }
-
-    const products = await productQuery;
+    const products = await Product.find(query).skip(skip).limit(limitNumber);
     const totalProducts = await Product.countDocuments(query);
 
     res.status(200).json({
@@ -44,7 +38,7 @@ export const getProducts = async (req, res, next) => {
       data: products,
       pagination: {
         page: pageNumber,
-        limit: limitNumber || totalProducts,
+        limit: limitNumber,
         totalProducts,
         totalPages: limitNumber ? Math.ceil(totalProducts / limitNumber) : 1,
         hasMore: limitNumber ? pageNumber * limitNumber < totalProducts : false,

@@ -1,65 +1,53 @@
-import mongoose from "mongoose";
-import dotenv from "dotenv"; // 🌟 1. นำเข้า dotenv เพื่อเปิดตาให้มองเห็นไฟล์ .env จ้า
-import * as ProductModule from "../modules/products/product.model.js";
-import { fileURLToPath } from "url";
-import path from "path";
+import { Product } from "../modules/products/product.model.js";
 
-// 🌟 3. สั่งโหลดไฟล์คอนฟิกสภาพแวดล้อม (.env) จากพิกัดถอยหลังนอกโฟลเดอร์ src
-dotenv.config({
-  path: path.join(path.dirname(fileURLToPath(import.meta.url)), "../../.env"),
-});
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// ── helpers ──────────────────────────────────────────
-const randomInt = (min, max) =>
-  Math.floor(Math.random() * (max - min + 1)) + min;
-const pick = (arr) => arr[Math.floor(Math.random() * arr.length)]; // ระบบสุ่มแบบไม่ bias ของเธอ ชิคมากๆ จ้า
-
-const CATEGORIES = ["Visual Art", "Craft & Handmade", "Music & Sound"];
-
-const buildProducts = (count) =>
-  Array.from({ length: count }, (_, i) => ({
-    name: `Creative Masterpiece No.${i + 1}`,
-    slug: `creative-masterpiece-no-${i + 1}`,
-    cartName: `Masterpiece #${i + 1}`, // 🌟 เพิ่มคีย์บังคับตาม Schema เพื่อน
-    artist: `Artist Name ${String.fromCharCode(65 + ((i + 1) % 26))}`, // 🌟 เพิ่มคีย์บังคับตาม Schema เพื่อน
-    price: randomInt(100, 2100),
-    category: pick(CATEGORIES),
-    description: [
-      `Handcrafted item #${i + 1} by a talented community artist.`,
-      "100% human art only.",
-    ], // 🌟 ครอบเป็นอาร์เรย์ตาม Schema เพื่อนจ้า
-    fromArtist: [`"I created this piece number ${i + 1} with love."`], // 🌟 ครอบเป็นอาร์เรย์ตาม Schema เพื่อนจ้า
-    images: [`https://picsum.photos/600/600?random=${i + 1}`], // 🌟 เปลี่ยนเป็นคีย์ images เติม s และครอบอาร์เรย์จ้า
-    stock: randomInt(1, 20),
-    quantity: randomInt(1, 20),
-  }));
-
-// ── seed ─────────────────────────────────────────────
-const seed = async () => {
+export const seedProductsDirectly = async (req, res) => {
   try {
-    const mongoUri = process.env.MONGODB_URI;
+    const dummyProducts = [];
+    const categories = ["Visual Art", "Craft & Handmade", "Music & Sound"];
 
-    await mongoose.connect(mongoUri);
-    console.log("🔋 MongoDB Connected");
+    for (let i = 1; i <= 100; i++) {
+      const randomCategory =
+        categories[Math.floor(Math.random() * categories.length)];
 
-    // แกะสลักเรียกตัวโมเดล Product ออกมาจากกล่องสากล
-    const TargetModel = ProductModule.Product || ProductModule.default;
+      dummyProducts.push({
+        slug: `creative-product-item-unique-${i}-${Math.floor(Math.random() * 10000)}`, // 2 & 3. ลบปีกกาเกินออก และกันการซ้ำกันของข้อมูล
+        category: randomCategory,
+        name: `สินค้าแฮนด์เมดชิ้นที่ ${i}`,
+        cartName: `Item #${i}`,
+        artist: `ศิลปินนิรนาม หมายเลข ${i}`,
+        price: 150,
+        quantity: 10,
+      });
+    }
 
-    await TargetModel.deleteMany(); // ล้างของเก่าก่อนเสมอ
-    const products = buildProducts(100);
+    const result = await Product.insertMany(dummyProducts);
 
-    await TargetModel.insertMany(products, { ordered: false }); // โครงสร้างสั่งเก็บแบบข้ามชิ้นพังของเธอ ยอดเยี่ยมมากจ้า
-    console.log(`🎉 Seeded ${products.length} products successfully!`);
-  } catch (err) {
-    console.error("❌ Seeding failed:", err.message);
-    process.exitCode = 1;
-  } finally {
-    await mongoose.disconnect(); // ปิด connection เสมอ
-    console.log("🔌 Disconnected");
+    res.status(201).json({
+      success: true,
+      message: `เย้! เสกข้อมูลสินค้าเข้าคลังสำเร็จทั้งหมด ${result.length} ชิ้นแล้วค่ะ `,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "อุ๊ย มีบางอย่างผิดพลาดค่ะ",
+      error: error.message,
+    });
   }
 };
 
-seed();
+export const updateAllQuantities = async (req, res, next) => {
+  try {
+    // 1. สั่งอัปเดตสินค้า "ทุกชิ้น" ใน Database ({}) ให้ฟิล์ด quantity กลายเป็น 99
+    // ข้อมูลถูกส่งไปทำงานที่ Database ชั้นเดียวตรงๆ เลยค่ะ อ่านง่ายมาก
+    const result = await Product.updateMany({}, { $set: { quantity: 99 } });
+
+    // 2. ส่ง Response กลับไปบอกจำนวนรายการที่อัปเดตสำเร็จ
+    res.status(200).json({
+      success: true,
+      message: `เสกสินค้าทั้งหมดจำนวน ${result.matchedCount} ชิ้นให้กลายเป็น 99 ชิ้นเรียบร้อยค่ะ!`,
+      modifiedCount: result.modifiedCount,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
