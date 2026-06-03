@@ -9,6 +9,7 @@ import {
   getCategories,
   getProductBySlug,
 } from "../modules/products/product.controller.js";
+import { seedProductsDirectly } from "../utils/seed.js";
 
 export const router = express.Router();
 
@@ -24,3 +25,5 @@ router.put("/:id", updateProduct);
 router.delete("/:id", deleteProduct);
 
 router.get("/:slug", getProductBySlug);
+
+router.post("/seed-direct", seedProductsDirectly);
