@@ -36,7 +36,7 @@ Content-Type: application/json
       ]}
 
 ### Delete
-DELETE http://localhost:7777/api/products/6a1687df96d193295d2a496c
+DELETE http://localhost:7777/api/products/6a1d805315aecba3d0cad3e7
 
 ### GET CATEGORIES
 GET http://localhost:7777/api/products/categories
@@ -46,3 +46,6 @@ GET http://localhost:7777/api/products/cybernecklace
 
 ### Search products 
 GET http://localhost:7777/api/products?search=c
+
+### Search product แบบจำกัดจำนวน
+GET http://localhost:7777/api/products?search=c&page=1&limit=12
