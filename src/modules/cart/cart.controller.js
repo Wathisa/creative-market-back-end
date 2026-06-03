@@ -269,6 +269,7 @@ export const clearCart = async (req, res, next) => {
       throw error;
     }
 
+    console.log(`[Cart] Clearing cart for User ${userId}...`);
     await Cart.findOneAndDelete({ userId });
     res.status(200).json({ success: true, message: "ล้างตะกร้าเรียบร้อยแล้ว" });
   } catch (error) {
