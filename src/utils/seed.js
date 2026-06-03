@@ -5,7 +5,7 @@ export const seedProductsDirectly = async (req, res) => {
     const dummyProducts = [];
     const categories = ["Visual Art", "Craft & Handmade", "Music & Sound"];
 
-    for (let i = 1; i <= 100; i++) {
+    for (let i = 101; i <= 1000; i++) {
       const randomCategory =
         categories[Math.floor(Math.random() * categories.length)];
 
@@ -16,7 +16,7 @@ export const seedProductsDirectly = async (req, res) => {
         cartName: `Item #${i}`,
         artist: `ศิลปินนิรนาม หมายเลข ${i}`,
         price: 150,
-        quantity: 10,
+        quantity: 2,
       });
     }
 
@@ -46,6 +46,27 @@ export const updateAllQuantities = async (req, res, next) => {
       success: true,
       message: `เสกสินค้าทั้งหมดจำนวน ${result.matchedCount} ชิ้นให้กลายเป็น 99 ชิ้นเรียบร้อยค่ะ!`,
       modifiedCount: result.modifiedCount,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteNewBatchProducts = async (req, res, next) => {
+  try {
+    // 1. สั่งยิงคำสั่งลบแบบมีเงื่อนไขเจาะจงไปยังฐานข้อมูลชั้นเดียวตรงๆ
+    const result = await Product.deleteMany({
+      name: {
+        // ใช้สัญลักษณ์ ^ (Caret) ใน regex เพื่อบอกว่า "ต้องขึ้นต้นด้วยคำนี้เท่านั้นนะ!"
+        $regex: "^สินค้าแฮนด์เมดชิ้นที่",
+        $options: "i",
+      },
+    });
+
+    // 2. ส่งข้อความตอบกลับไปบอกจำนวนก้อนขยะที่โดนทลายทิ้งสำเร็จ
+    res.status(200).json({
+      success: true,
+      message: `ทลายสินค้าจำลองสำเร็จเรียบร้อยค่ะ! ลบออกไปทั้งหมด ${result.deletedCount} ชิ้น`,
     });
   } catch (error) {
     next(error);
