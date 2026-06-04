@@ -29,7 +29,14 @@ const orderSchema = new mongoose.Schema(
       enum: ["pending", "paid", "cancelled"],
       default: "pending",
     },
-    paymentMethod: { type: String, default: "promptpay" },
+    paymentMethod: {
+      type: String,
+      required: [true, "กรุณาระบุช่องทางการชำระเงิน"],
+      enum: {
+        values: ["promptpay", "credit_card", "true_money"],
+        message: "{VALUE} ไม่ใช่ช่องทางการชำระเงินที่รองรับ"
+      }
+    },
     paymentRef: { type: String, default: "" }, // เลขที่อ้างอิงการโอนเงิน
     paidAt: { type: Date }, // วันที่ยืนยันการชำระเงิน
   },
