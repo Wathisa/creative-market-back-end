@@ -8,14 +8,41 @@ Content-Type: application/json
   "password": "password1234"
 }
 
-### 2. สร้างคำสั่งซื้อ (Checkout จากตะกร้า)
-# ระบบจะดึงที่อยู่ล่าสุดจากโปรไฟล์ให้อัตโนมัติ (1 User : 1 Address)
+### 2. สร้างคำสั่งซื้อ (Success - เลือกที่อยู่จากโปรไฟล์)
+# @name checkoutSuccess
 POST http://localhost:7777/api/orders/checkout
 Content-Type: application/json
 
 {
   "paymentMethod": "promptpay"
 }
+
+### 2.1 สร้างคำสั่งซื้อ (Success - กรอกที่อยู่ใหม่ Manual)
+POST http://localhost:7777/api/orders/checkout
+Content-Type: application/json
+
+{
+  "paymentMethod": "credit_card",
+  "shippingAddress": {
+    "recipientName": "สมชาย ใจดี",
+    "phone": "0812345678",
+    "street": "123/45 หมู่บ้านทดสอบ",
+    "district": "บางรัก",
+    "province": "กรุงเทพ",
+    "postcode": "10500"
+  }
+}
+
+### 2.2 สร้างคำสั่งซื้อ (Fail - ไม่ส่ง paymentMethod)
+POST http://localhost:7777/api/orders/checkout
+Content-Type: application/json
+
+{
+  "shippingAddress": {
+    "recipientName": "สมชาย ใจดี"
+  }
+}
+
 
 ### 3. ดึงประวัติการสั่งซื้อทั้งหมด (ของตัวเองเท่านั้น)
 GET http://localhost:7777/api/orders/

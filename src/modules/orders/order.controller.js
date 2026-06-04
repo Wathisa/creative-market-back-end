@@ -10,11 +10,18 @@ export const createOrder = async (req, res, next) => {
   session.startTransaction();
   try {
     const userId = req.user?.userId;
-    const { paymentMethod = "promptpay" } = req.body;
+    const { paymentMethod, shippingAddress: manualAddress } = req.body;
 
     if (!userId) {
       const error = new Error("กรุณาเข้าสู่ระบบก่อนสั่งซื้อ");
       error.status = 401;
+      throw error;
+    }
+
+    // [NEW] ตรวจสอบช่องทางการชำระเงิน (Explicit Selection)
+    if (!paymentMethod) {
+      const error = new Error("กรุณาเลือกช่องทางการชำระเงิน");
+      error.status = 400;
       throw error;
     }
 
@@ -32,15 +39,29 @@ export const createOrder = async (req, res, next) => {
       await Order.deleteOne({ _id: existingPendingOrder._id }).session(session);
     }
 
-    // 2. ดึงข้อมูลที่อยู่เดียวของผู้ใช้เพื่อทำ Snapshot
-    const addressDoc = await Address.findOne({ userId }).session(session);
-    if (!addressDoc || !addressDoc.address) {
-      const error = new Error("ไม่พบข้อมูลที่อยู่จัดส่ง กรุณาระบุที่อยู่ในหน้า Profile ก่อนสั่งซื้อ");
-      error.status = 400;
-      throw error;
-    }
+    // [NEW] 2. การเลือกที่อยู่จัดส่ง (Flexible Address Selection: Manual > Saved/Default)
+    let finalAddress = null;
 
-    const addr = addressDoc.address;
+    if (manualAddress && manualAddress.province && manualAddress.postcode) {
+      // 2.1 ใช้ที่อยู่ที่ส่งมาใหม่ (Manual)
+      finalAddress = {
+        recipientName: manualAddress.recipientName,
+        phone: manualAddress.phone,
+        street: manualAddress.street,
+        district: manualAddress.district,
+        province: manualAddress.province,
+        postcode: manualAddress.postcode
+      };
+    } else {
+      // 2.2 ดึงข้อมูลที่อยู่ที่บันทึกไว้ (Saved/Default)
+      const addressDoc = await Address.findOne({ userId }).session(session);
+      if (!addressDoc || !addressDoc.address) {
+        const error = new Error("ไม่พบข้อมูลที่อยู่จัดส่ง กรุณาระบุที่อยู่ที่หน้า Profile หรือกรอกที่อยู่ใหม่");
+        error.status = 400;
+        throw error;
+      }
+      finalAddress = addressDoc.address;
+    }
 
     // 3. ดึงข้อมูลตะกร้าล่าสุด
     const cart = await Cart.findOne({ userId }).populate("items.productId").session(session);
@@ -99,12 +120,12 @@ export const createOrder = async (req, res, next) => {
       items: orderItems,
       totalPrice,
       shippingAddress: {
-        recipientName: addr.recipientName,
-        phone: addr.phone,
-        street: addr.street,
-        district: addr.district,
-        province: addr.province,
-        postcode: addr.postcode
+        recipientName: finalAddress.recipientName,
+        phone: finalAddress.phone,
+        street: finalAddress.street,
+        district: finalAddress.district,
+        province: finalAddress.province,
+        postcode: finalAddress.postcode
       },
       status: "pending",
       paymentMethod,
