@@ -14,6 +14,15 @@ const CATEGORY_COLORS = {
   Unknown: "#94a3b8",
 };
 
+const getLocalDateKey = (value) => {
+  const date = new Date(value);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
 const getCustomerLookup = async (orders) => {
   //ดึง username/email ของ user ทุกคนที่มี order แล้วทำเป็น Map สำหรับ lookup เร็ว
   const userIds = [
@@ -24,7 +33,10 @@ const getCustomerLookup = async (orders) => {
   );
 
   return new Map(
-    users.map((user) => [String(user._id), user.username || user.email || "-"]),
+    users.map((user) => [
+      String(user._id),
+      user.email || user.username || "-",
+    ]),
   );
 };
 
@@ -52,6 +64,30 @@ const flattenOrders = (
       date: order.createdAt,
     })),
   );
+
+const mapRecentOrders = (orders, customerLookup) =>
+  orders.map((order) => {
+    const firstItem = order.items[0];
+    const totalQuantity = order.items.reduce(
+      (sum, item) => sum + item.quantity,
+      0,
+    );
+
+    return {
+      id: String(order._id),
+      orderId: order._id,
+      name: firstItem?.name || "Untitled order",
+      artist: firstItem?.productId?.artist || "-",
+      image: firstItem?.productId?.images?.[0] || "",
+      quantity: totalQuantity,
+      amount: order.totalPrice,
+      customer: customerLookup.get(order.userId) || "-",
+      status: order.status,
+      statusLabel: STATUS_LABELS[order.status] || order.status,
+      createdAt: order.createdAt,
+      date: order.paidAt || order.createdAt,
+    };
+  });
 
 const getMetricsFromPaidOrders = (paidOrders) => {
   //คำนวณ totalSales, จำนวน order, จำนวนชิ้น, ค่าเฉลี่ยต่อ order
@@ -84,8 +120,13 @@ const getSalesOverview = (paidOrders) => {
     date.setDate(today.getDate() - (6 - index));
 
     return {
-      key: date.toISOString().slice(0, 10),
+      key: getLocalDateKey(date),
       label: date.toLocaleDateString("en-US", { weekday: "short" }),
+      date: date.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }),
       sales: 0,
     };
   });
@@ -93,7 +134,8 @@ const getSalesOverview = (paidOrders) => {
   const bucketMap = new Map(buckets.map((bucket) => [bucket.key, bucket]));
 
   paidOrders.forEach((order) => {
-    const bucketKey = new Date(order.createdAt).toISOString().slice(0, 10);
+    const sourceDate = order.paidAt || order.createdAt;
+    const bucketKey = getLocalDateKey(sourceDate);
     const bucket = bucketMap.get(bucketKey);
 
     if (bucket) {
@@ -101,7 +143,7 @@ const getSalesOverview = (paidOrders) => {
     }
   });
 
-  return buckets.map(({ label, sales }) => ({ label, sales }));
+  return buckets.map(({ label, date, sales }) => ({ label, date, sales }));
 };
 
 const getCategoryBreakdown = (paidOrders) => {
@@ -117,10 +159,15 @@ const getCategoryBreakdown = (paidOrders) => {
     });
   });
 
+  const totalItems = Array.from(categoryTotals.values()).reduce(
+    (sum, value) => sum + value,
+    0,
+  );
+
   return Array.from(categoryTotals.entries()).map(([label, value]) => ({
     label,
     value,
-    sold: `${value} ชิ้น`,
+    sold: `${totalItems > 0 ? ((value / totalItems) * 100).toFixed(1) : "0.0"}%`,
     color: CATEGORY_COLORS[label] || "#94a3b8",
   }));
 };
@@ -137,7 +184,6 @@ export const getAdminOverview = async (req, res, next) => {
     const orders = await loadOrdersWithProducts();
     const paidOrders = orders.filter((order) => order.status === "paid");
     const customerLookup = await getCustomerLookup(orders);
-    const flattenedOrders = flattenOrders(orders, customerLookup);
     const metrics = getMetricsFromPaidOrders(paidOrders);
 
     return res.status(200).json({
@@ -146,7 +192,7 @@ export const getAdminOverview = async (req, res, next) => {
         ...metrics,
         salesOverview: getSalesOverview(paidOrders),
         categoryBreakdown: getCategoryBreakdown(paidOrders),
-        recentOrders: flattenedOrders.slice(0, 6),
+        recentOrders: mapRecentOrders(orders, customerLookup).slice(0, 8),
       },
     });
   } catch (error) {
