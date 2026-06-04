@@ -37,6 +37,8 @@ const orderSchema = new mongoose.Schema(
         message: "{VALUE} ไม่ใช่ช่องทางการชำระเงินที่รองรับ",
       },
     },
+    courier: { type: String, default: "" }, //Lin-ขอเพิ่มหน่อยยย
+    trackingNumber: { type: String, default: "" }, //Lin-ขอเพิ่มหน่อยยย
     paymentRef: { type: String, default: "" }, // เลขที่อ้างอิงการโอนเงิน
     paidAt: { type: Date }, // วันที่ยืนยันการชำระเงิน
   },
