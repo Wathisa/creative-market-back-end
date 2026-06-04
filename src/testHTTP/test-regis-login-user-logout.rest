@@ -7,11 +7,11 @@ POST http://localhost:7777/api/users/register
 Content-Type: application/json
 
 {
-  "username": "tridev",
-  "email": "admintest3@example.com",
+  "username": "usertest2",
+  "email": "usertest2@example.com",
   "password": "password1234",
   "confirmPassword": "password1234",
-  "role": "admin"
+  "role": "user"
 }
 
 ### =========================================
