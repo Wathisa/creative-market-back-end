@@ -1,10 +1,12 @@
 import { Router } from "express";
-import { forgotPassword } from "../modules/forgotPass/forgot.auth.controller.js"; 
+// ปรับ path ตรง forgotpass เป็นตัวพิมพ์เล็กตาม main เพื่อป้องกัน Error บน Server
+import { forgotPassword } from "../modules/forgotpass/forgot.auth.controller.js"; 
 import { forgotPasswordLimiter } from "../middlewares/forgot.auth.middleware.js"; 
 import { redisClient } from "../config/redis.js";
 
 export const router = Router();
 
+// API เช็คสถานะ Rate Limit ของพี่ตรี (สำคัญมาก ห้ามลบ เพราะ Frontend ต้องใช้)
 router.get("/forgot-password/status", async (req, res) => {
   try {
     const clientIp = req.ip;

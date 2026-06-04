@@ -17,19 +17,32 @@ const orderSchema = new mongoose.Schema(
     ],
     totalPrice: { type: Number, required: true },
     shippingAddress: {
-      name: { type: String, required: true },
-      detail: { type: String, required: true },
+      recipientName: { type: String, required: true },
+      phone: { type: String, required: true },
+      street: { type: String, required: true },
+      district: { type: String, trim: true, default: "" },
+      province: { type: String, required: true },
+      postcode: { type: String, required: true },
     },
     status: {
       type: String,
       enum: ["pending", "paid", "cancelled"],
       default: "pending",
     },
-    paymentMethod: { type: String, default: "promptpay" },
+    paymentMethod: {
+      type: String,
+      required: [true, "กรุณาระบุช่องทางการชำระเงิน"],
+      enum: {
+        values: ["promptpay", "credit_card", "true_money"],
+        message: "{VALUE} ไม่ใช่ช่องทางการชำระเงินที่รองรับ",
+      },
+    },
+    courier: { type: String, default: "" }, //Lin-ขอเพิ่มหน่อยยย
+    trackingNumber: { type: String, default: "" }, //Lin-ขอเพิ่มหน่อยยย
     paymentRef: { type: String, default: "" }, // เลขที่อ้างอิงการโอนเงิน
     paidAt: { type: Date }, // วันที่ยืนยันการชำระเงิน
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const Order = mongoose.model("Order", orderSchema);

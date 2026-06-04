@@ -8,21 +8,43 @@ const STATUS_LABELS = {
   cancelled: "ยกเลิก",
 };
 
-const flattenOrderItems = (orders) =>
-  orders.flatMap((order) =>
-    order.items.map((item, index) => ({
-      id: `${order._id}-${item.productId}-${index}`,
-      orderId: order._id,
-      productId: item.productId,
-      name: item.name,
-      price: item.price,
-      quantity: item.quantity,
-      lineTotal: item.price * item.quantity,
-      status: order.status,
-      statusLabel: STATUS_LABELS[order.status] || order.status.toUpperCase(),
-      createdAt: order.createdAt,
-    })),
+const mapDashboardItem = (order, item, index) => ({
+  id: `${order._id}-${item.productId}-${index}`,
+  orderId: order._id,
+  productId: item.productId?._id || item.productId,
+  name: item.name,
+  artist: item.productId?.artist || "-",
+  image: item.productId?.images?.[0] || "",
+  price: item.price,
+  quantity: item.quantity,
+  lineTotal: item.price * item.quantity,
+  status: order.status,
+  statusLabel: STATUS_LABELS[order.status] || order.status.toUpperCase(),
+  courier: order.courier || "",
+  trackingNumber: order.trackingNumber || "",
+  createdAt: order.createdAt,
+  paidAt: order.paidAt || null,
+});
+
+const mapDashboardOrder = (order) => {
+  const items = order.items.map((item, index) =>
+    mapDashboardItem(order, item, index),
   );
+
+  return {
+    id: String(order._id),
+    orderId: order._id,
+    status: order.status,
+    statusLabel: STATUS_LABELS[order.status] || order.status.toUpperCase(),
+    courier: order.courier || "",
+    trackingNumber: order.trackingNumber || "",
+    createdAt: order.createdAt,
+    paidAt: order.paidAt || null,
+    totalAmount: order.totalPrice,
+    totalQuantity: items.reduce((sum, item) => sum + item.quantity, 0),
+    items,
+  };
+};
 
 export const getDashboardMe = async (req, res, next) => {
   try {
@@ -79,11 +101,12 @@ export const getMyStatus = async (req, res, next) => {
     const userId = req.user?.userId;
     const orders = await Order.find({ userId, status: "pending" })
       .sort({ createdAt: -1 })
-      .select("items status createdAt");
+      .select("items totalPrice status courier trackingNumber createdAt paidAt")
+      .populate("items.productId", "images artist");
 
     return res.status(200).json({
       success: true,
-      data: flattenOrderItems(orders),
+      data: orders.map(mapDashboardOrder),
     });
   } catch (error) {
     next(error);
@@ -95,11 +118,12 @@ export const getMyHistory = async (req, res, next) => {
     const userId = req.user?.userId;
     const orders = await Order.find({ userId, status: "paid" })
       .sort({ createdAt: -1 })
-      .select("items status createdAt");
+      .select("items totalPrice status courier trackingNumber createdAt paidAt")
+      .populate("items.productId", "images artist");
 
     return res.status(200).json({
       success: true,
-      data: flattenOrderItems(orders),
+      data: orders.map(mapDashboardOrder),
     });
   } catch (error) {
     next(error);
@@ -111,10 +135,10 @@ export const getMyOrders = async (req, res, next) => {
     const userId = req.user?.userId;
     const orders = await Order.find({ userId })
       .sort({ createdAt: -1 })
-      .select("items totalPrice status createdAt");
+      .select("items totalPrice status courier trackingNumber createdAt paidAt")
+      .populate("items.productId", "images artist");
 
     const paidOrders = orders.filter((order) => order.status === "paid");
-    const flattenedOrders = flattenOrderItems(orders);
 
     return res.status(200).json({
       success: true,
@@ -127,7 +151,7 @@ export const getMyOrders = async (req, res, next) => {
           ),
           completedOrders: paidOrders.length,
         },
-        orders: flattenedOrders,
+        orders: orders.map(mapDashboardOrder),
       },
     });
   } catch (error) {

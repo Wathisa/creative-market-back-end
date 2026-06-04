@@ -25,6 +25,9 @@ const formatCartResponse = (cart) => {
       price: product?.price || 0,
       images: product?.images || [],
       artist: product?.artist || "Unknown",
+      category: product?.category || "Uncategorized",
+      tags: product?.tags || [],
+      stock: product?.quantity || 0,
       quantity: item.quantity,
       subtotal: itemSubtotal
     };
@@ -52,8 +55,9 @@ export const getCart = async (req, res, next) => {
 
     const cart = await Cart.findOne({ userId }).populate(
       "items.productId",
-      "name price images artist category"
+      "name price images artist category tags quantity"
     );
+
 
     if (!cart) {
       return res.status(200).json({
@@ -132,7 +136,7 @@ export const addItemToCart = async (req, res, next) => {
       });
     }
 
-    await cart.populate("items.productId", "name price images artist");
+    await cart.populate("items.productId", "name price images artist category tags quantity");
     res.status(200).json({ success: true, data: formatCartResponse(cart) });
   } catch (error) {
     next(error);
@@ -189,7 +193,7 @@ export const updateCartItem = async (req, res, next) => {
 
       cart.markModified('items');
       await cart.save();
-      await cart.populate("items.productId", "name price images artist");
+      await cart.populate("items.productId", "name price images artist category tags quantity");
       res.status(200).json({ success: true, data: formatCartResponse(cart) });
     } else {
       const error = new Error("ไม่พบสินค้านี้ในตะกร้า");
@@ -222,7 +226,7 @@ export const removeCartItem = async (req, res, next) => {
     cart.items = cart.items.filter((item) => item.productId.toString() !== productId);
     await cart.save();
     
-    await cart.populate("items.productId", "name price images artist");
+    await cart.populate("items.productId", "name price images artist category tags quantity");
     res.status(200).json({ success: true, data: formatCartResponse(cart) });
   } catch (error) {
     next(error);
@@ -265,6 +269,7 @@ export const clearCart = async (req, res, next) => {
       throw error;
     }
 
+    console.log(`[Cart] Clearing cart for User ${userId}...`);
     await Cart.findOneAndDelete({ userId });
     res.status(200).json({ success: true, message: "ล้างตะกร้าเรียบร้อยแล้ว" });
   } catch (error) {

@@ -3,8 +3,12 @@ import {
   getAdminOrders,
   getAdminOverview,
   getAdminSales,
+  updateOrderShipping,
 } from "../modules/dashboard/admin-dashboard.controller.js";
-import { requireRole, verifyToken } from "../middlewares/login.auth.middleware.js";
+import {
+  requireRole,
+  verifyToken,
+} from "../middlewares/login.auth.middleware.js";
 
 export const router = Router();
 
@@ -14,3 +18,4 @@ router.use(requireRole(["admin"]));
 router.get("/overview", getAdminOverview);
 router.get("/orders", getAdminOrders);
 router.get("/sales", getAdminSales);
+router.patch("/orders/:orderId/shipping", updateOrderShipping);

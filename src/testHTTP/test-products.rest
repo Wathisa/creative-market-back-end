@@ -28,15 +28,15 @@ Content-Type: application/json
 }
 
 ### PUT
-PUT http://localhost:7777/api/products/6a1685fc96d193295d2a496a
+PUT http://localhost:7777/api/products/6a17d6fa366cc8cf0470d4d9
 Content-Type: application/json
 
-{ "images": [
-        "https://res.cloudinary.com/duc5gow6f/image/upload/v1779948614/frieren-01_jbkbxq.png"
-      ]}
+{
+  "quantity": 20
+}
 
 ### Delete
-DELETE http://localhost:7777/api/products/6a1d805315aecba3d0cad3e7
+DELETE http://localhost:7777/api/products/6a1d98e750fa7930765ead62
 
 ### GET CATEGORIES
 GET http://localhost:7777/api/products/categories
@@ -46,3 +46,12 @@ GET http://localhost:7777/api/products/cybernecklace
 
 ### Search products 
 GET http://localhost:7777/api/products?search=c
+
+### Search product แบบจำกัดจำนวน
+GET http://localhost:7777/api/products?search=c&page=1&limit=12
+
+### ADD Product 900 products
+POST http://localhost:7777/api/products/seed-direct
+
+### ADD ALL Product Quantity 99
+PATCH http://localhost:7777/api/products/update-quantity-all
