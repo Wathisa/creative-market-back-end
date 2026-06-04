@@ -34,11 +34,10 @@ const getCustomerLookup = async (orders) => {
   );
 };
 
-const flattenOrders = (orders, customerLookup) =>
-  orders.flatMap((order) =>
-    order.items.map((item, index) => ({
-      id: `${order._id}-${item.productId}-${index}`,
-      orderId: order._id,
+const mapAdminOrders = (orders, customerLookup) =>
+  orders.map((order) => {
+    const items = order.items.map((item, index) => ({
+      id: `${order._id}-${item.productId?._id || item.productId || index}-${index}`,
       productId: item.productId?._id || item.productId || null,
       name: item.name,
       artist: item.productId?.artist || "-",
@@ -46,15 +45,23 @@ const flattenOrders = (orders, customerLookup) =>
       quantity: item.quantity,
       price: item.price,
       amount: item.price * item.quantity,
+    }));
+
+    return {
+      id: String(order._id),
+      orderId: order._id,
       customer: customerLookup.get(order.userId) || "-",
       status: order.status,
       statusLabel: STATUS_LABELS[order.status] || order.status,
       courier: order.courier || "",
       trackingNumber: order.trackingNumber || "",
       createdAt: order.createdAt,
-      date: order.createdAt,
-    })),
-  );
+      date: order.paidAt || order.createdAt,
+      totalAmount: order.totalPrice,
+      totalQuantity: items.reduce((sum, item) => sum + item.quantity, 0),
+      items,
+    };
+  });
 
 const mapRecentOrders = (orders, customerLookup) =>
   orders.map((order) => {
@@ -190,23 +197,21 @@ export const getAdminOrders = async (req, res, next) => {
   try {
     const orders = await loadOrdersWithProducts();
     const customerLookup = await getCustomerLookup(orders);
-    const flattenedOrders = flattenOrders(orders, customerLookup);
+    const mappedOrders = mapAdminOrders(orders, customerLookup);
 
     return res.status(200).json({
       success: true,
       data: {
         summary: {
-          allOrders: flattenedOrders.length,
-          pendingCount: flattenedOrders.filter(
-            (order) => order.status === "pending",
-          ).length,
-          paidCount: flattenedOrders.filter((order) => order.status === "paid")
+          allOrders: mappedOrders.length,
+          pendingCount: mappedOrders.filter((order) => order.status === "pending")
             .length,
-          cancelledCount: flattenedOrders.filter(
+          paidCount: mappedOrders.filter((order) => order.status === "paid").length,
+          cancelledCount: mappedOrders.filter(
             (order) => order.status === "cancelled",
           ).length,
         },
-        orders: flattenedOrders,
+        orders: mappedOrders,
       },
     });
   } catch (error) {
