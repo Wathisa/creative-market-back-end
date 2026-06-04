@@ -56,9 +56,8 @@ const mapAdminOrders = (orders, customerLookup) =>
       courier: order.courier || "",
       trackingNumber: order.trackingNumber || "",
       createdAt: order.createdAt,
-      date: order.paidAt || order.createdAt,
+      paidAt: order.paidAt || null,
       totalAmount: order.totalPrice,
-      totalQuantity: items.reduce((sum, item) => sum + item.quantity, 0),
       items,
     };
   });

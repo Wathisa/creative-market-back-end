@@ -23,6 +23,7 @@ const mapDashboardItem = (order, item, index) => ({
   courier: order.courier || "",
   trackingNumber: order.trackingNumber || "",
   createdAt: order.createdAt,
+  paidAt: order.paidAt || null,
 });
 
 const mapDashboardOrder = (order) => {
@@ -38,6 +39,7 @@ const mapDashboardOrder = (order) => {
     courier: order.courier || "",
     trackingNumber: order.trackingNumber || "",
     createdAt: order.createdAt,
+    paidAt: order.paidAt || null,
     totalAmount: order.totalPrice,
     totalQuantity: items.reduce((sum, item) => sum + item.quantity, 0),
     items,
@@ -99,7 +101,7 @@ export const getMyStatus = async (req, res, next) => {
     const userId = req.user?.userId;
     const orders = await Order.find({ userId, status: "pending" })
       .sort({ createdAt: -1 })
-      .select("items totalPrice status courier trackingNumber createdAt")
+      .select("items totalPrice status courier trackingNumber createdAt paidAt")
       .populate("items.productId", "images artist");
 
     return res.status(200).json({
@@ -116,7 +118,7 @@ export const getMyHistory = async (req, res, next) => {
     const userId = req.user?.userId;
     const orders = await Order.find({ userId, status: "paid" })
       .sort({ createdAt: -1 })
-      .select("items totalPrice status courier trackingNumber createdAt")
+      .select("items totalPrice status courier trackingNumber createdAt paidAt")
       .populate("items.productId", "images artist");
 
     return res.status(200).json({
@@ -133,7 +135,7 @@ export const getMyOrders = async (req, res, next) => {
     const userId = req.user?.userId;
     const orders = await Order.find({ userId })
       .sort({ createdAt: -1 })
-      .select("items totalPrice status courier trackingNumber createdAt")
+      .select("items totalPrice status courier trackingNumber createdAt paidAt")
       .populate("items.productId", "images artist");
 
     const paidOrders = orders.filter((order) => order.status === "paid");
