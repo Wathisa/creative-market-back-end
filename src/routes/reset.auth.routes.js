@@ -1,16 +1,15 @@
 import { Router } from "express";
 import { resetPassword } from "../modules/forgotpass/reset.auth.controllers.js"; 
 import { resetPasswordLimiter } from "../middlewares/reset.auth.middleware.js"; 
-import { redisClient } from "../config/redis.js"; // ตรวจสอบว่า import ถูกต้อง
+import { redisClient } from "../config/redis.js";
 
 export const router = Router();
 
-// API ใหม่สำหรับเช็คสถานะการบล็อก
 router.get("/reset-password/status", async (req, res) => {
   try {
     const clientIp = req.ip;
     const redisKey = `rl:${clientIp}`; 
-    const ttlSeconds = await redisClient.ttl(redisKey); 
+    const ttlSeconds = await redisClient.ttl(redisKey);
 
     if (ttlSeconds > 0) {
       return res.json({ isBlocked: true, timeLeft: ttlSeconds });
