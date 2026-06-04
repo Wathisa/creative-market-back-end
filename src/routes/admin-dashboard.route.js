@@ -5,7 +5,10 @@ import {
   getAdminSales,
   updateOrderShipping,
 } from "../modules/dashboard/admin-dashboard.controller.js";
-import { requireRole, verifyToken } from "../middlewares/login.auth.middleware.js";
+import {
+  requireRole,
+  verifyToken,
+} from "../middlewares/login.auth.middleware.js";
 
 export const router = Router();
 

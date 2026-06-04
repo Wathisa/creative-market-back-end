@@ -25,30 +25,18 @@ Content-Type: application/json
   "quantity": 1
 }
 
-### 3. เพิ่มสินค้าลงตะกร้า (Add Item)
-# Logic: บวกเพิ่มจากของเดิม (Increment: Current + New)
-POST http://localhost:7777/api/cart/add
-Content-Type: application/json
-
-{
-  "productId": "6a17c381d7b9296b299277da", 
-  "quantity": 1
-}
-
-
 ### 4. อัปเดตจำนวนสินค้า (Update Item)
-# Logic: แทนที่ด้วยจำนวนที่ระบุ (Set: Replace with New Value)
+# Logic: แทนที่ด้วยจำนวนที่ระบุ (SET Absolute Value)
+# เช่น จาก 5 แก้เป็น 2 ตะกร้าต้องเหลือ 2 (ไม่ใช่ 7 หรือ 3)
 PATCH http://localhost:7777/api/cart/update
 Content-Type: application/json
 
 {
   "productId": "6a1685fc96d193295d2a496a", 
-  "quantity": 1
+  "quantity": 2
 }
 
-
-### 4. อัปเดตจำนวนสินค้า (Update Item)
-# Logic: แทนที่ด้วยจำนวนที่ระบุ (Set: Replace with New Value)
+### 5. ลบสินค้าโดยการ Set Quantity เป็น 0
 PATCH http://localhost:7777/api/cart/update
 Content-Type: application/json
 
@@ -57,8 +45,8 @@ Content-Type: application/json
   "quantity": 1
 }
 
-### 5. ลบสินค้า 1 ชิ้นออกจากตะกร้า (Remove Item)
+### 6. ลบสินค้า 1 ชิ้นออกจากตะกร้า (Remove Item by ID)
 DELETE http://localhost:7777/api/cart/remove/6a1685fc96d193295d2a496a
 
-### 6. ล้างตะกร้าทั้งหมด (Clear Cart)
+### 7. ล้างตะกร้าทั้งหมด (Clear Cart)
 DELETE http://localhost:7777/api/cart/clear

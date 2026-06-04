@@ -25,6 +25,9 @@ const formatCartResponse = (cart) => {
       price: product?.price || 0,
       images: product?.images || [],
       artist: product?.artist || "Unknown",
+      category: product?.category || "Uncategorized",
+      tags: product?.tags || [],
+      stock: product?.quantity || 0,
       quantity: item.quantity,
       subtotal: itemSubtotal
     };
@@ -52,8 +55,9 @@ export const getCart = async (req, res, next) => {
 
     const cart = await Cart.findOne({ userId }).populate(
       "items.productId",
-      "name price images artist category"
+      "name price images artist category tags quantity"
     );
+
 
     if (!cart) {
       return res.status(200).json({
@@ -132,7 +136,7 @@ export const addItemToCart = async (req, res, next) => {
       });
     }
 
-    await cart.populate("items.productId", "name price images artist");
+    await cart.populate("items.productId", "name price images artist category tags quantity");
     res.status(200).json({ success: true, data: formatCartResponse(cart) });
   } catch (error) {
     next(error);
@@ -141,7 +145,7 @@ export const addItemToCart = async (req, res, next) => {
 
 export const updateCartItem = async (req, res, next) => {
   try {
-    const { productId, quantity } = req.body; // quantity ส่งมาเป็นเลขบวก (เช่น 1) หรือเลขลบ (เช่น -1)
+    const { productId, quantity } = req.body; // quantity ส่งมาเป็นจำนวนใหม่ที่ต้องการกำหนด (Absolute Value)
     const userId = req.user?.userId;
 
     if (!userId) {
@@ -150,9 +154,9 @@ export const updateCartItem = async (req, res, next) => {
       throw error;
     }
 
-    const changeAmount = Number(quantity);
-    if (isNaN(changeAmount)) {
-      const error = new Error("จำนวนสินค้าต้องเป็นตัวเลข");
+    const newQuantity = Number(quantity);
+    if (isNaN(newQuantity) || newQuantity < 0) {
+      const error = new Error("จำนวนสินค้าต้องเป็นตัวเลขที่มากกว่าหรือเท่ากับ 0");
       error.status = 400;
       throw error;
     }
@@ -166,34 +170,30 @@ export const updateCartItem = async (req, res, next) => {
 
     const itemIndex = cart.items.findIndex((p) => p.productId.toString() === productId.toString());
     if (itemIndex > -1) {
-      const currentQuantity = cart.items[itemIndex].quantity;
-      const newTotalQuantity = currentQuantity + changeAmount;
-
-      // ถ้าผลลัพธ์เป็น 0 หรือติดลบ ให้ลบสินค้าออกจากตะกร้า
-      if (newTotalQuantity <= 0) {
+      // ถ้ากำหนดเป็น 0 ให้ลบสินค้าออกจากตะกร้า
+      if (newQuantity === 0) {
         cart.items = cart.items.filter((item) => item.productId.toString() !== productId.toString());
       } else {
-        // ตรวจสอบสต็อกสินค้าก่อนอัปเดต (เฉพาะกรณีบวกเพิ่ม)
-        if (changeAmount > 0) {
-          const product = await Product.findById(productId);
-          if (!product) {
-            const error = new Error("ไม่พบสินค้านี้ในระบบ");
-            error.status = 404;
-            throw error;
-          }
-          if (product.quantity < newTotalQuantity) {
-            const error = new Error(`สินค้าในคลังไม่พอ (สต็อกเหลือ ${product.quantity})`);
-            error.status = 400;
-            throw error;
-          }
+        // ตรวจสอบสต็อกสินค้าก่อนอัปเดต
+        const product = await Product.findById(productId);
+        if (!product) {
+          const error = new Error("ไม่พบสินค้านี้ในระบบ");
+          error.status = 404;
+          throw error;
+        }
+
+        if (product.quantity < newQuantity) {
+          const error = new Error(`สินค้าในคลังไม่พอ (ต้องการ ${newQuantity}, แต่สต็อกเหลือ ${product.quantity})`);
+          error.status = 400;
+          throw error;
         }
         
-        cart.items[itemIndex].quantity = newTotalQuantity;
+        cart.items[itemIndex].quantity = newQuantity;
       }
 
       cart.markModified('items');
       await cart.save();
-      await cart.populate("items.productId", "name price images artist");
+      await cart.populate("items.productId", "name price images artist category tags quantity");
       res.status(200).json({ success: true, data: formatCartResponse(cart) });
     } else {
       const error = new Error("ไม่พบสินค้านี้ในตะกร้า");
@@ -226,7 +226,7 @@ export const removeCartItem = async (req, res, next) => {
     cart.items = cart.items.filter((item) => item.productId.toString() !== productId);
     await cart.save();
     
-    await cart.populate("items.productId", "name price images artist");
+    await cart.populate("items.productId", "name price images artist category tags quantity");
     res.status(200).json({ success: true, data: formatCartResponse(cart) });
   } catch (error) {
     next(error);
@@ -269,6 +269,7 @@ export const clearCart = async (req, res, next) => {
       throw error;
     }
 
+    console.log(`[Cart] Clearing cart for User ${userId}...`);
     await Cart.findOneAndDelete({ userId });
     res.status(200).json({ success: true, message: "ล้างตะกร้าเรียบร้อยแล้ว" });
   } catch (error) {
