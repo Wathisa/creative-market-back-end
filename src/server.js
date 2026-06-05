@@ -22,6 +22,7 @@ app.use(
       "https://creative-market-front-end-sprint-2-mu.vercel.app",
     ],
     credentials: true,
+    exposedHeaders: ['RateLimit-Reset', 'Retry-After']
   }),
 );
 

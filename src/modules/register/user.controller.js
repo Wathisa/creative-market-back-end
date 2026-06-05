@@ -1,4 +1,6 @@
 import { User } from "./user.model.js";
+// อย่าลืม import redisClient มาเพื่อใช้เคลียร์ค่า
+import { redisClient } from "../../config/redis.js"; 
 
 export const checkEmail = async (req, res) => {
   const { email } = req.query;
@@ -10,7 +12,6 @@ export const checkEmail = async (req, res) => {
 };
 
 export const registerUser = async (req, res) => {
-  // 1. ดึง username และ role ออกมาจาก req.body ด้วย
   const { email, password, confirmPassword, username, role } = req.body;
 
   if (password !== confirmPassword) {
@@ -22,9 +23,19 @@ export const registerUser = async (req, res) => {
     return res.status(400).json({ message: "Email already exists" });
   }
 
-  
   const newUser = new User({ email, password, username, role });
   await newUser.save();
+
+  // === ส่วนที่เพิ่ม: พอข้อมูลลง Database เรียบร้อย ให้รีเซ็ตค่ากลับเป็น 0 ทันที ===
+  try {
+    const clientIp = req.ip;
+    const redisKey = `rl:register:${clientIp}`; 
+    await redisClient.del(redisKey);
+    console.log(`เคลียร์สถานะการนับให้ IP: ${clientIp} เรียบร้อยแล้ว`);
+  } catch (error) {
+    console.error("Failed to delete Redis key:", error);
+  }
+  // ===============================================================
 
   res.status(201).json({ success: true, message: "User registered successfully" });
 };
