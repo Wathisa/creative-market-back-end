@@ -41,11 +41,9 @@ The backend serves as the engine for a trust-first art marketplace where every l
 | Node.js | JavaScript runtime |
 | Express.js | REST API framework |
 | MongoDB + Mongoose | NoSQL database with schema modeling |
-| Multer | Multipart file upload handling |
 | Cloudinary | Cloud-based image storage and delivery |
 | JSON Web Token (JWT) | Stateless user authentication |
 | Rate Limiting Middleware | API abuse protection |
-| Nodemon | Auto-restart during development |
 | REST Client (`.rest` files) | HTTP endpoint testing |
 | Render | Backend deployment and hosting |
 
